@@ -1,7 +1,13 @@
+// App.js
 import Layout from './components/common/Layout';
+import { ToastProvider } from './hooks/useToast';
 
 function App() {
-  return <Layout />;
+  return (
+    <ToastProvider>
+      <Layout />
+    </ToastProvider>
+  );
 }
 
 export default App;

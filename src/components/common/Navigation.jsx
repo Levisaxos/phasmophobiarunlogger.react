@@ -1,13 +1,16 @@
-// components/common/Navigation.jsx
+// components/common/Navigation.jsx - Replace alert() calls with toast notifications
 import React, { useState } from 'react';
 import { dataService } from '../../services';
 import { ClearDataModal, ClearRunDataModal } from '../modals';
+import { useToast } from '../../hooks/useToast';
 
 const Navigation = ({ activeTab, setActiveTab }) => {
   const [isManageDropdownOpen, setIsManageDropdownOpen] = useState(false);
   const [isDataDropdownOpen, setIsDataDropdownOpen] = useState(false);
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
   const [isClearRunDataModalOpen, setIsClearRunDataModalOpen] = useState(false);
+  
+  const { success, error, info } = useToast();
 
   const mainMenuItems = [
     { id: 'list', label: 'Runs', type: 'tab' },
@@ -53,10 +56,10 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   const exportData = async () => {
     try {
       await dataService.exportToFile();
-      console.log('Data exported successfully');
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed: ' + error.message);
+      success('Data exported successfully!');
+    } catch (err) {
+      console.error('Export failed:', err);
+      error('Export failed: ' + err.message);
     }
   };
 
@@ -71,12 +74,11 @@ const Navigation = ({ activeTab, setActiveTab }) => {
       if (file) {
         try {
           await dataService.importFromFile(file);
-          console.log('Data imported successfully');
-          alert('Data imported successfully! The page will refresh to show the new data.');
-          window.location.reload();
-        } catch (error) {
-          console.error('Import failed:', error);
-          alert('Import failed: ' + error.message);
+          success('Data imported successfully! The page will refresh to show the new data.');
+          setTimeout(() => window.location.reload(), 1500);
+        } catch (err) {
+          console.error('Import failed:', err);
+          error('Import failed: ' + err.message);
         }
       }
       document.body.removeChild(fileInput);
@@ -90,9 +92,8 @@ const Navigation = ({ activeTab, setActiveTab }) => {
     localStorage.removeItem('phasmophobia-data');
     dataService.clearCache();
     
-    console.log('All data cleared successfully');
-    alert('All data has been cleared successfully! The page will refresh.');
-    window.location.reload();
+    success('All data has been cleared successfully! The page will refresh.');
+    setTimeout(() => window.location.reload(), 1500);
   };
 
   const handleClearRunData = async () => {
@@ -106,16 +107,14 @@ const Navigation = ({ activeTab, setActiveTab }) => {
       localStorage.setItem('phasmophobia-data', JSON.stringify(clearedData));
       dataService.clearCache();
       
-      console.log('Run data cleared successfully');
-      alert('All run data has been cleared successfully! The page will refresh.');
-      window.location.reload();
-    } catch (error) {
-      console.error('Error clearing run data:', error);
-      alert('Failed to clear run data: ' + error.message);
+      success('All run data has been cleared successfully! The page will refresh.');
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error('Error clearing run data:', err);
+      error('Failed to clear run data: ' + err.message);
     }
   };
 
-  // Check if any manage tab is active
   const isManageTabActive = manageMenuItems.some(item => item.id === activeTab);
 
   return (

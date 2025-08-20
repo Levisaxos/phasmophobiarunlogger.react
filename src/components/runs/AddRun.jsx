@@ -1,14 +1,17 @@
-// components/AddRun.jsx
+// components/runs/AddRun/index.jsx - Replace alert() calls with toast notifications
 import React, { useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
-import TodaysPlayersModal from '../modals/TodaysPlayersModal';
-import MapRoomSelector from './AddRun/MapRoomSelector';
-import CursedPossessionSelector from './AddRun/CursedPossessionSelector';
-import EvidenceSelector from './AddRun/EvidenceSelector';
-import GhostSelector from './AddRun/GhostSelector';
-import PlayerStatus from './AddRun/PlayerStatus';
-import DifficultyGameSelector from './AddRun/DifficultyGameSelector';
+import { useToast } from '../../hooks/useToast';
+import { TodaysPlayersModal } from '../modals';
+import {
+  MapRoomSelector,
+  CursedPossessionSelector,
+  EvidenceSelector,
+  GhostSelector,
+  PlayerStatus,
+  DifficultyGameSelector
+} from './AddRun/';
 
 const AddRun = () => {
   const {
@@ -22,6 +25,8 @@ const AddRun = () => {
     error,
     createRun
   } = useData();
+
+  const { success, error: showError, warning } = useToast();
 
   const {
     // State
@@ -98,12 +103,12 @@ const AddRun = () => {
     e.preventDefault();
 
     if (!selectedMap || !selectedRoom || !selectedGhost) {
-      alert('Please fill in all required fields');
+      warning('Please fill in all required fields');
       return;
     }
 
     if (todaysPlayers.length === 0) {
-      alert('Please set up today\'s players first');
+      warning('Please set up today\'s players first');
       return;
     }
 
@@ -119,11 +124,11 @@ const AddRun = () => {
       const newRun = await createRun(runData);
       resetForm();
 
-      alert(`Run saved successfully! Run #${newRun.runNumber} for ${todaysPlayers.length} player${todaysPlayers.length > 1 ? 's' : ''} today.`);
+      success(`Run saved successfully! Run #${newRun.runNumber} for ${todaysPlayers.length} player${todaysPlayers.length > 1 ? 's' : ''} today.`);
 
-    } catch (error) {
-      console.error('Error saving run:', error);
-      alert('Failed to save run: ' + error.message);
+    } catch (err) {
+      console.error('Error saving run:', err);
+      showError('Failed to save run: ' + err.message);
     } finally {
       setIsSaving(false);
     }

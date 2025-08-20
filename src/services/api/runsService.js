@@ -1,4 +1,4 @@
-// services/runsService.js
+// services/runsService.js - Clean version that stores only essential data
 import { baseService } from './baseService';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -7,25 +7,34 @@ export const runsService = {
   async getRuns() {
     await delay(100);
     const data = await baseService.loadData();
-    return [...data.runs];
+    return data.runs.map(run => this.enrichRunData(run));
   },
 
   async getRunById(id) {
     await delay(50);
     const data = await baseService.loadData();
-    return data.runs.find(run => run.id === id);
+    const run = data.runs.find(run => run.id === id);
+    return run ? this.enrichRunData(run) : null;
   },
 
   async getRunsByDate(date) {
     await delay(50);
     const data = await baseService.loadData();
-    return data.runs.filter(run => run.date === date);
+    return data.runs
+      .filter(run => this.getDateFromTimestamp(run.timestamp) === date)
+      .map(run => this.enrichRunData(run));
   },
 
   async getRunsByDateAndPlayerCount(date, playerCount) {
     await delay(50);
     const data = await baseService.loadData();
-    return data.runs.filter(run => run.date === date && run.playerCount === playerCount);
+    return data.runs
+      .filter(run => {
+        const runDate = this.getDateFromTimestamp(run.timestamp);
+        const runPlayerCount = run.players ? run.players.length : 0;
+        return runDate === date && runPlayerCount === playerCount;
+      })
+      .map(run => this.enrichRunData(run));
   },
 
   async getTodaysRunNumber(playerCount) {
@@ -38,32 +47,41 @@ export const runsService = {
     await delay(100);
     const data = await baseService.loadData();
     
-    const runNumber = await this.getTodaysRunNumber(runData.playerCount);
+    // Calculate player count for run numbering
+    const playerCount = runData.players ? runData.players.length : 0;
+    const runNumber = await this.getTodaysRunNumber(playerCount);
     
-    const newRun = {
-      ...runData,
+    // Store only essential data - no redundant fields
+    const cleanRunData = {
+      // Core identifiers
       id: baseService.getNextId(data.runs),
       runNumber,
-      timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
+      timestamp: runData.timestamp || new Date().toISOString(),
       
-      // Ensure these fields exist
-      actualGhostId: runData.actualGhostId || runData.ghostId,
-      actualGhostName: runData.actualGhostName || runData.ghostName,
-      playerStates: runData.playerStates || {},
-      isPerfectGame: runData.isPerfectGame || false,
+      // Game setup
+      mapId: runData.mapId,
+      roomId: runData.roomId,
+      roomName: runData.roomName, // Keep for backward compatibility during transition
       cursedPossessionId: runData.cursedPossessionId || null,
-      cursedPossessionName: runData.cursedPossessionName || null,
+      evidenceIds: runData.evidenceIds || [],
       gameModeId: runData.gameModeId || null,
-      gameModeName: runData.gameModeName || null,
       
-      // Calculate correctness
-      wasCorrect: runData.actualGhostId ? runData.ghostId === runData.actualGhostId : true
+      // Ghost identification
+      ghostId: runData.ghostId,
+      actualGhostId: runData.actualGhostId || runData.ghostId,
+      
+      // Player data with embedded status (replaces playerStates and playersLegacy)
+      players: runData.players || [],
+      
+      // Game outcome
+      isPerfectGame: runData.isPerfectGame || false
     };
     
-    data.runs.push(newRun);
+    data.runs.push(cleanRunData);
     await baseService.saveData(data);
-    return newRun;
+    
+    // Return enriched data for immediate use
+    return this.enrichRunData(cleanRunData);
   },
 
   async updateRun(id, runData) {
@@ -72,9 +90,17 @@ export const runsService = {
     const index = data.runs.findIndex(run => run.id === id);
     
     if (index !== -1) {
-      data.runs[index] = { ...runData, id };
+      // Update with clean structure while preserving ID and runNumber
+      const updatedRun = {
+        ...runData,
+        id,
+        runNumber: data.runs[index].runNumber,
+        timestamp: runData.timestamp || data.runs[index].timestamp
+      };
+      
+      data.runs[index] = updatedRun;
       await baseService.saveData(data);
-      return data.runs[index];
+      return this.enrichRunData(data.runs[index]);
     }
     
     throw new Error('Run not found');
@@ -88,9 +114,57 @@ export const runsService = {
     if (index !== -1) {
       const deleted = data.runs.splice(index, 1)[0];
       await baseService.saveData(data);
-      return deleted;
+      return this.enrichRunData(deleted);
     }
     
     throw new Error('Run not found');
+  },
+
+  // Helper methods to calculate derived data
+  getDateFromTimestamp(timestamp) {
+    return timestamp.split('T')[0];
+  },
+
+  getPlayerCount(players) {
+    return players ? players.length : 0;
+  },
+
+  getPlayerStates(players) {
+    const states = {};
+    if (players && Array.isArray(players)) {
+      players.forEach(player => {
+        const playerName = typeof player === 'object' ? player.name : player;
+        const playerStatus = typeof player === 'object' ? player.status : 'alive';
+        if (playerName) {
+          states[playerName] = playerStatus;
+        }
+      });
+    }
+    return states;
+  },
+
+  getPlayersLegacy(players) {
+    if (players && Array.isArray(players)) {
+      return players.map(player => typeof player === 'object' ? player.name : player);
+    }
+    return [];
+  },
+
+  wasCorrect(ghostId, actualGhostId) {
+    return ghostId === actualGhostId;
+  },
+
+  // Enrich stored data with calculated fields for backward compatibility
+  // This ensures all existing UI components continue to work
+  enrichRunData(run) {
+    return {
+      ...run,
+      // Calculated fields for backward compatibility with existing UI
+      date: this.getDateFromTimestamp(run.timestamp),
+      playerCount: this.getPlayerCount(run.players),
+      playerStates: this.getPlayerStates(run.players),
+      playersLegacy: this.getPlayersLegacy(run.players),
+      wasCorrect: this.wasCorrect(run.ghostId, run.actualGhostId)
+    };
   }
 };

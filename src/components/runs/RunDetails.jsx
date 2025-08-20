@@ -1,4 +1,7 @@
+// components/runs/RunDetails.jsx
 import React from 'react';
+import { formatDate, formatTime } from '../../utils/dateUtils';
+import { getRoomName } from '../../utils/formatUtils';
 
 const RunDetails = ({
   selectedRun,
@@ -23,26 +26,6 @@ const RunDetails = ({
     );
   }
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('nl-NL', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  // Format time for display
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('nl-NL', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   // Get run details
   const map = maps.find(m => m.id === selectedRun.mapId);
   const ghost = ghosts.find(g => g.id === selectedRun.ghostId);
@@ -50,20 +33,74 @@ const RunDetails = ({
   const cursedPossession = selectedRun.cursedPossessionId ? 
     availableCursedPossessions.find(p => p.id === selectedRun.cursedPossessionId) : null;
 
-  // Get room name - handle both room ID and legacy room name
-  const getRoomName = () => {
-    if (selectedRun.roomName) {
-      // If roomName exists, use it (covers both legacy and new format)
-      return selectedRun.roomName;
-    } else if (selectedRun.roomId && map?.rooms) {
-      // If we have roomId and map rooms, try to find room by ID
-      if (typeof map.rooms[0] === 'object') {
-        // New format: rooms with IDs
-        const room = map.rooms.find(r => r.id === selectedRun.roomId);
-        return room?.name || 'Unknown Room';
-      }
+  const roomName = getRoomName(selectedRun, map);
+
+  // Format players section
+  const renderPlayersSection = () => {
+    // Handle both new and legacy player data formats
+    let playersData = [];
+    let playerCount = 0;
+    
+    if (selectedRun.players && Array.isArray(selectedRun.players) && typeof selectedRun.players[0] === 'object') {
+      // New format: players is array of objects with id, name, status
+      playersData = selectedRun.players;
+      playerCount = playersData.length;
+    } else if (selectedRun.players && Array.isArray(selectedRun.players)) {
+      // Legacy format: players is array of names, use playerStates for status
+      const playerStates = selectedRun.playerStates || {};
+      playersData = selectedRun.players.map(playerName => ({
+        name: playerName,
+        status: playerStates[playerName] || 'alive'
+      }));
+      playerCount = selectedRun.players.length;
+    } else if (selectedRun.playersLegacy) {
+      // Fallback to legacy players field
+      const playerStates = selectedRun.playerStates || {};
+      playersData = selectedRun.playersLegacy.map(playerName => ({
+        name: playerName,
+        status: playerStates[playerName] || 'alive'
+      }));
+      playerCount = selectedRun.playersLegacy.length;
+    } else {
+      playerCount = selectedRun.playerCount || 0;
     }
-    return 'Unknown Room';
+
+    return (
+      <>
+        <p className="text-sm text-gray-300 mb-2">
+          {playerCount} player{playerCount !== 1 ? 's' : ''}
+        </p>
+        {playersData.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {playersData.map((player, index) => {
+              const playerName = player.name || player;
+              const status = player.status || 'alive';
+              return (
+                <div
+                  key={`${playerName}-${index}`}
+                  className={`flex items-center justify-between p-2 rounded-md ${
+                    status === 'alive' 
+                      ? 'bg-green-600/20 border border-green-600/30' 
+                      : 'bg-red-600/20 border border-red-600/30'
+                  }`}
+                >
+                  <span className="text-sm font-medium text-gray-200">{playerName}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    status === 'alive' 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-red-600 text-white'
+                  }`}>
+                    {status === 'alive' ? '😄' : '💀'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-400">No players recorded</p>
+        )}
+      </>
+    );
   };
 
   return (
@@ -94,7 +131,7 @@ const RunDetails = ({
                   <div className="bg-gray-800 rounded-lg p-4 relative">
                     <p className="text-lg font-medium text-gray-100">{map?.name || 'Unknown Map'}</p>
                     <p className="text-sm text-gray-300 capitalize">Size: {map?.size || 'Unknown'}</p>
-                    <p className="text-sm text-gray-300 mt-2">Room: <span className="font-medium">{getRoomName()}</span></p>
+                    <p className="text-sm text-gray-300 mt-2">Room: <span className="font-medium">{roomName}</span></p>
 
                     <div className={`absolute top-4 right-4 w-6 h-6 ${selectedRun.isPerfectGame ? 'text-yellow-400' : 'text-gray-500'}`}>
                       <svg viewBox="0 0 24 24" fill={selectedRun.isPerfectGame ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
@@ -193,72 +230,7 @@ const RunDetails = ({
                 <div>
                   <h5 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-2">Players</h5>
                   <div className="bg-gray-800 rounded-lg p-4">
-                    {(() => {
-                      // Handle both new and legacy player data formats
-                      let playersData = [];
-                      let playerCount = 0;
-                      
-                      if (selectedRun.players && Array.isArray(selectedRun.players) && typeof selectedRun.players[0] === 'object') {
-                        // New format: players is array of objects with id, name, status
-                        playersData = selectedRun.players;
-                        playerCount = playersData.length;
-                      } else if (selectedRun.players && Array.isArray(selectedRun.players)) {
-                        // Legacy format: players is array of names, use playerStates for status
-                        const playerStates = selectedRun.playerStates || {};
-                        playersData = selectedRun.players.map(playerName => ({
-                          name: playerName,
-                          status: playerStates[playerName] || 'alive'
-                        }));
-                        playerCount = selectedRun.players.length;
-                      } else if (selectedRun.playersLegacy) {
-                        // Fallback to legacy players field
-                        const playerStates = selectedRun.playerStates || {};
-                        playersData = selectedRun.playersLegacy.map(playerName => ({
-                          name: playerName,
-                          status: playerStates[playerName] || 'alive'
-                        }));
-                        playerCount = selectedRun.playersLegacy.length;
-                      } else {
-                        playerCount = selectedRun.playerCount || 0;
-                      }
-
-                      return (
-                        <>
-                          <p className="text-sm text-gray-300 mb-2">
-                            {playerCount} player{playerCount !== 1 ? 's' : ''}
-                          </p>
-                          {playersData.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {playersData.map((player) => {
-                                const playerName = player.name || player;
-                                const status = player.status || 'alive';
-                                return (
-                                  <div
-                                    key={playerName}
-                                    className={`flex items-center justify-between p-2 rounded-md ${
-                                      status === 'alive' 
-                                        ? 'bg-green-600/20 border border-green-600/30' 
-                                        : 'bg-red-600/20 border border-red-600/30'
-                                    }`}
-                                  >
-                                    <span className="text-sm font-medium text-gray-200">{playerName}</span>
-                                    <span className={`text-xs px-2 py-1 rounded-full ${
-                                      status === 'alive' 
-                                        ? 'bg-green-600 text-white' 
-                                        : 'bg-red-600 text-white'
-                                    }`}>
-                                      {status === 'alive' ? '😄' : '💀'}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-gray-400">No players recorded</p>
-                          )}
-                        </>
-                      );
-                    })()}
+                    {renderPlayersSection()}
                   </div>
                 </div>
               </div>

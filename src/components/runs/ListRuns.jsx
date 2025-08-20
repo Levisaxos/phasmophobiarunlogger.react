@@ -38,39 +38,53 @@ const ListRuns = () => {
     const players = new Set();
     runs.forEach(run => {
       if (run.players && Array.isArray(run.players)) {
-        run.players.forEach(player => players.add(player));
+        run.players.forEach(player => {
+          // Handle both object and string formats
+          let playerName;
+          if (typeof player === 'object' && player !== null) {
+            // New format: player is an object with name property
+            playerName = player.name;
+          } else {
+            // Legacy format: player is a string
+            playerName = player;
+          }
+
+          if (playerName) {
+            players.add(String(playerName));
+          }
+        });
       }
     });
     const playersArray = Array.from(players).sort();
-    
+
     // Move Levisaxos to the front if present
     const levisaxosIndex = playersArray.indexOf('Levisaxos');
     if (levisaxosIndex > -1) {
       playersArray.splice(levisaxosIndex, 1);
       playersArray.unshift('Levisaxos');
     }
-    
+
     return playersArray;
   }, [runs]);
 
   // Helper function to check if run matches exact player selection
   const matchesExactPlayers = (run, selectedPlayers) => {
     if (selectedPlayers.length === 0) return true; // No filter applied
-    
+
     const runPlayers = run.players || [];
-    
+
     // Must have exact same number of players
     if (runPlayers.length !== selectedPlayers.length) return false;
-    
+
     // Must contain all selected players and no others
     return selectedPlayers.every(player => runPlayers.includes(player)) &&
-           runPlayers.every(player => selectedPlayers.includes(player));
+      runPlayers.every(player => selectedPlayers.includes(player));
   };
 
   // Helper function to apply a single filter to runs
   const applyFilter = (runs, filterType, filterValue) => {
     if (!filterValue) return runs;
-    
+
     switch (filterType) {
       case 'date':
         return runs.filter(run => run.date === filterValue);
@@ -111,19 +125,19 @@ const ListRuns = () => {
   // Function to get filtered runs excluding one specific filter
   const getFilteredRunsExcluding = (excludeFilter) => {
     let filtered = [...runs];
-    
+
     // Apply exact player filter first (if not excluded)
     if (excludeFilter !== 'exactPlayer') {
       filtered = filtered.filter(run => matchesExactPlayers(run, selectedPlayerFilter));
     }
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       const filterType = key.replace('Filter', '');
       if (filterType !== excludeFilter && value) {
         filtered = applyFilter(filtered, filterType, value);
       }
     });
-    
+
     return filtered;
   };
 
@@ -214,13 +228,13 @@ const ListRuns = () => {
     let noDeathsCount = 0;
     let anyDeathsCount = 0;
     const playerDeathCounts = {};
-    
+
     deathsFilteredRuns.forEach(run => {
       if (!run.playerStates) {
         noDeathsCount++; // Assume no deaths if no player states
         return;
       }
-      
+
       const hasDeaths = Object.entries(run.playerStates).some(([player, status]) => {
         if (status === 'dead') {
           playerDeathCounts[player] = (playerDeathCounts[player] || 0) + 1;
@@ -228,14 +242,14 @@ const ListRuns = () => {
         }
         return false;
       });
-      
+
       if (hasDeaths) {
         anyDeathsCount++;
       } else {
         noDeathsCount++;
       }
     });
-    
+
     const deathsOptions = {
       allCount: deathsFilteredRuns.length,
       noDeathsCount,
@@ -314,20 +328,30 @@ const ListRuns = () => {
   };
 
   // Calculate individual player game counts for display
-  const individualPlayerCounts = useMemo(() => {
-    const baseFilteredRuns = getFilteredRunsExcluding('exactPlayer');
-    const counts = {};
-    
-    baseFilteredRuns.forEach(run => {
-      if (run.players && Array.isArray(run.players)) {
-        run.players.forEach(player => {
-          counts[player] = (counts[player] || 0) + 1;
-        });
-      }
-    });
-    
-    return counts;
-  }, [runs, filters]);
+const individualPlayerCounts = useMemo(() => {
+  const baseFilteredRuns = getFilteredRunsExcluding('exactPlayer');
+  const counts = {};
+  
+  baseFilteredRuns.forEach(run => {
+    if (run.players && Array.isArray(run.players)) {
+      run.players.forEach(player => {
+        // Handle both object and string formats
+        let playerName;
+        if (typeof player === 'object' && player !== null) {
+          playerName = player.name;
+        } else {
+          playerName = player;
+        }
+        
+        if (playerName) {
+          counts[playerName] = (counts[playerName] || 0) + 1;
+        }
+      });
+    }
+  });
+  
+  return counts;
+}, [runs, filters]);
 
   if (loading) {
     return (
@@ -352,32 +376,32 @@ const ListRuns = () => {
         <div className="mb-3">
           <h3 className="text-lg font-semibold text-gray-100 mb-2">Filter by Exact Player Combination</h3>
           <p className="text-sm text-gray-400">
-            Select players to show only games with that exact player combination. 
+            Select players to show only games with that exact player combination.
             Leave empty to show all games.
           </p>
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
-          {allPlayers.map(player => {
-            const isSelected = selectedPlayerFilter.includes(player);
-            const playerGameCount = individualPlayerCounts[player] || 0;
-            
+          {allPlayers.map(playerName => {
+            // playerName is now guaranteed to be a string
+            const isSelected = selectedPlayerFilter.includes(playerName);
+            const playerGameCount = individualPlayerCounts[playerName] || 0;
+
             return (
               <button
-                key={player}
-                onClick={() => handlePlayerFilterChange(player)}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                  isSelected
+                key={playerName} // Now using string instead of object
+                onClick={() => handlePlayerFilterChange(playerName)}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${isSelected
                     ? 'bg-blue-600 text-white border-2 border-blue-500'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-600 border-2 border-gray-600'
-                }`}
+                  }`}
               >
-                {player}
+                {playerName}
                 <span className="ml-1 text-xs">({playerGameCount})</span>
               </button>
             );
           })}
-        </div>        
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -390,7 +414,7 @@ const ListRuns = () => {
           totalRuns={runs.length}
           filteredCount={filteredRuns.length}
         />
-        
+
         <RunsList
           runs={filteredRuns}
           selectedRun={selectedRun}
@@ -399,7 +423,7 @@ const ListRuns = () => {
           ghosts={ghosts}
           availableCursedPossessions={availableCursedPossessions}
         />
-        
+
         <RunDetails
           selectedRun={selectedRun}
           maps={maps}

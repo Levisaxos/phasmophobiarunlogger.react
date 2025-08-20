@@ -3,6 +3,10 @@ import Navigation from './Navigation';
 import ListRuns from './ListRuns.jsx';
 import ManageMaps from './ManageMaps.jsx';
 import ManageGhosts from './ManageGhosts.jsx';
+import ManageEvidence from './ManageEvidence.jsx';
+import ManageCursedPossessions from './ManageCursedPossessions.jsx';
+import ManagePlayers from './ManagePlayers.jsx';
+import ManageGameModes from './ManageGameModes.jsx';
 import AddRun from './AddRun.jsx';
 
 const Layout = () => {
@@ -22,6 +26,14 @@ const Layout = () => {
         return <ManageMaps />;
       case 'manage-ghosts':
         return <ManageGhosts />;
+      case 'manage-evidence':
+        return <ManageEvidence />;
+      case 'manage-cursed-possessions':
+        return <ManageCursedPossessions />;
+      case 'manage-players':
+        return <ManagePlayers />;
+      case 'manage-game-modes':
+        return <ManageGameModes />;
       default:
         return <div>Select a tab</div>;
     }

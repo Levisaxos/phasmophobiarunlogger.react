@@ -32,9 +32,78 @@ const RunsList = ({
   const getRunDetails = (run) => {
     const map = maps.find(m => m.id === run.mapId);
     const ghost = ghosts.find(g => g.id === run.ghostId);
-    const cursedPossession = run.cursedPossessionId ? 
+    const actualghost = ghosts.find(g => g.id === run.actualGhostId);
+    const cursedPossession = run.cursedPossessionId ?
       availableCursedPossessions.find(p => p.id === run.cursedPossessionId) : null;
-    return { map, ghost, cursedPossession };
+    
+    // Get room name - handle both room ID and legacy room name
+    const getRoomName = () => {
+      if (run.roomName) {
+        // If roomName exists, use it (covers both legacy and new format)
+        return run.roomName;
+      } else if (run.roomId && map?.rooms) {
+        // If we have roomId and map rooms, try to find room by ID
+        if (typeof map.rooms[0] === 'object') {
+          // New format: rooms with IDs
+          const room = map.rooms.find(r => r.id === run.roomId);
+          return room?.name || 'Unknown Room';
+        }
+      }
+      return 'Unknown Room';
+    };
+    
+    return { map, ghost, cursedPossession, actualghost, roomName: getRoomName() };
+  };
+
+  // Format players with color coding based on alive/dead status
+  const formatPlayersWithStatus = (run) => {
+    // Handle both new and legacy player data formats
+    let playersData = [];
+    
+    if (run.players && Array.isArray(run.players) && typeof run.players[0] === 'object') {
+      // New format: players is array of objects with id, name, status
+      playersData = run.players;
+    } else if (run.players && Array.isArray(run.players)) {
+      // Legacy format: players is array of names, use playerStates for status
+      const playerStates = run.playerStates || {};
+      playersData = run.players.map(playerName => ({
+        name: playerName,
+        status: playerStates[playerName] || 'alive'
+      }));
+    } else if (run.playersLegacy) {
+      // Fallback to legacy players field
+      const playerStates = run.playerStates || {};
+      playersData = run.playersLegacy.map(playerName => ({
+        name: playerName,
+        status: playerStates[playerName] || 'alive'
+      }));
+    }
+
+    if (playersData.length === 0) {
+      return <span className="text-gray-400">No players</span>;
+    }
+    
+    return (
+      <div className="flex flex-wrap gap-1">
+        {playersData.map((player, index) => {
+          const playerName = player.name || player;
+          const status = player.status || 'alive';
+          const isAlive = status === 'alive';
+          
+          return (
+            <span key={playerName} className="inline-flex items-center">
+              <span className={`font-medium ${isAlive ? 'text-green-500' : 'text-red-500'}`}>
+                {playerName}
+              </span>
+              {/* Add comma separator except for last player */}
+              {index < playersData.length - 1 && (
+                <span className="text-gray-400 ml-1">,</span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -53,7 +122,7 @@ const RunsList = ({
           ) : (
             <div className="space-y-2">
               {runs.map((run) => {
-                const { map, ghost, cursedPossession } = getRunDetails(run);
+                const { map, ghost, cursedPossession, actualghost, roomName } = getRunDetails(run);
                 return (
                   <button
                     key={run.id}
@@ -67,20 +136,19 @@ const RunsList = ({
                       <span className="font-medium">
                         Run #{run.runNumber} - {formatDate(run.date)}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs ${run.wasCorrect
-                        ? 'bg-green-600 text-white'
-                        : 'bg-red-600 text-white'
-                        }`}>
-                        {run.wasCorrect ? '✓' : '✗'}
-                      </span>
                     </div>
                     <div className="text-xs text-gray-400 space-y-1">
-                      <div>{map?.name || 'Unknown Map'} - {run.roomName}</div>
-                      <div>{ghost?.name || 'Unknown Ghost'}</div>
+                      <div>{map?.name || 'Unknown Map'} - {roomName}</div>
+                      <div className='flex gap-2'>
+                        {ghost?.name !== actualghost?.name && (
+                          <span className='text-red-500 line-through'>{ghost?.name}</span>
+                        )}
+                        <span className='text-green-500'>{actualghost?.name || 'Unknown Ghost'}</span>
+                      </div>
                       {cursedPossession && (
-                        <div className="text-purple-400">🔮 {cursedPossession.name}</div>
+                        <div className="text-purple-400">{cursedPossession.name}</div>
                       )}
-                      <div>{run.players?.join(', ') || 'No players'} ({run.playerCount} players)</div>
+                      <div>{formatPlayersWithStatus(run)}</div>
                       <div>{formatTime(run.timestamp)}</div>
                     </div>
                   </button>

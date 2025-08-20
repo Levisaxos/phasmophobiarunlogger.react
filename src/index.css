@@ -16,34 +16,95 @@ code {
     monospace;
 }
 
-/* Add this to your src/index.css for toast animations */
-
+/* Toast animations */
 @keyframes slide-in-right {
   from {
-    transform: translateX(100%);
+    transform: translateX(100%) scale(0.95);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes slide-out-right {
   from {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(100%) scale(0.95);
     opacity: 0;
   }
 }
 
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
 .animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
+  animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-slide-out-right {
-  animation: slide-out-right 0.3s ease-out;
+  animation: slide-out-right 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.2s ease-in;
+}
+
+/* Smooth transitions for toast states */
+.toast-enter {
+  transform: translateX(100%) scale(0.95);
+  opacity: 0;
+}
+
+.toast-enter-active {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-exit {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+}
+
+.toast-exit-active {
+  transform: translateX(100%) scale(0.95);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
 }

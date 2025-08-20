@@ -1,17 +1,17 @@
-// components/runs/AddRun/index.jsx - Replace alert() calls with toast notifications
+// components/runs/AddRun.jsx - Fixed import paths and structure
 import React, { useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
 import { useToast } from '../../hooks/useToast';
 import { TodaysPlayersModal } from '../modals';
-import {
-  MapRoomSelector,
-  CursedPossessionSelector,
-  EvidenceSelector,
-  GhostSelector,
-  PlayerStatus,
-  DifficultyGameSelector
-} from './AddRun/';
+
+// Import from AddRun subdirectory
+import MapRoomSelector from './MapRoomSelector';
+import CursedPossessionSelector from './CursedPossessionSelector';
+import EvidenceSelector from './EvidenceSelector';
+import GhostSelector from './GhostSelector';
+import PlayerStatus from './PlayerStatus';
+import DifficultyGameSelector from './DifficultyGameSelector';
 
 const AddRun = () => {
   const {

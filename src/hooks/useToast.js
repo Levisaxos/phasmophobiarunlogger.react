@@ -1,5 +1,6 @@
 // hooks/useToast.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { TOAST_CONSTANTS } from '../constants';
 
 const ToastContext = createContext();
 
@@ -14,28 +15,76 @@ export const useToast = () => {
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = 'info', duration = 3000) => {
+  const addToast = useCallback((message, type = 'info', duration) => {
+    // Use type-specific durations from constants
+    const defaultDuration = duration || (() => {
+      switch (type) {
+        case 'success': return TOAST_CONSTANTS.SUCCESS_DURATION;
+        case 'error': return TOAST_CONSTANTS.ERROR_DURATION;
+        case 'warning': return TOAST_CONSTANTS.WARNING_DURATION;
+        case 'info': return TOAST_CONSTANTS.INFO_DURATION;
+        default: return TOAST_CONSTANTS.DEFAULT_DURATION;
+      }
+    })();
+
     const id = Date.now() + Math.random();
-    const toast = { id, message, type, duration };
+    const toast = { 
+      id, 
+      message, 
+      type, 
+      duration: defaultDuration,
+      isVisible: true,
+      isFading: false
+    };
     
-    setToasts(prev => [...prev, toast]);
+    setToasts(prev => {
+      // Limit maximum number of toasts
+      const updatedToasts = [...prev, toast];
+      return updatedToasts.slice(-TOAST_CONSTANTS.MAX_TOASTS);
+    });
     
-    // Auto remove after duration
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, duration);
+    // Auto remove after duration (only if duration is not Infinity)
+    if (defaultDuration !== Infinity) {
+      // Start fade out animation before removal
+      const fadeOutTimer = setTimeout(() => {
+        setToasts(prev => prev.map(t => 
+          t.id === id ? { ...t, isFading: true } : t
+        ));
+        
+        // Remove after fade animation completes
+        const removeTimer = setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.id !== id));
+        }, TOAST_CONSTANTS.FADE_OUT_DURATION);
+        
+        return () => clearTimeout(removeTimer);
+      }, defaultDuration - TOAST_CONSTANTS.FADE_OUT_DURATION);
+      
+      return () => clearTimeout(fadeOutTimer);
+    }
     
     return id;
   }, []);
 
   const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    // Start fade animation first
+    setToasts(prev => prev.map(t => 
+      t.id === id ? { ...t, isFading: true } : t
+    ));
+    
+    // Remove after fade animation
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, TOAST_CONSTANTS.FADE_OUT_DURATION);
   }, []);
 
-  const success = useCallback((message, duration) => addToast(message, 'success', duration), [addToast]);
-  const error = useCallback((message, duration) => addToast(message, 'error', duration), [addToast]);
-  const warning = useCallback((message, duration) => addToast(message, 'warning', duration), [addToast]);
-  const info = useCallback((message, duration) => addToast(message, 'info', duration), [addToast]);
+  const success = useCallback((message, duration) => 
+    addToast(message, 'success', duration), [addToast]);
+  const error = useCallback((message, duration) => 
+    addToast(message, 'error', duration), [addToast]);
+  const warning = useCallback((message, duration) => 
+    addToast(message, 'warning', duration), [addToast]);
+  const info = useCallback((message, duration) => 
+    addToast(message, 'info', duration), [addToast]);
 
   return (
     <ToastContext.Provider value={{ 
@@ -68,7 +117,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
 
 // Individual Toast Component
 const Toast = ({ toast, onClose }) => {
-  const { message, type } = toast;
+  const { message, type, isFading } = toast;
 
   const getTypeStyles = () => {
     switch (type) {
@@ -106,7 +155,13 @@ const Toast = ({ toast, onClose }) => {
   const styles = getTypeStyles();
 
   return (
-    <div className={`${styles.bg} ${styles.border} ${styles.text} border rounded-lg shadow-xl p-4 min-w-80 max-w-md animate-slide-in-right`}>
+    <div 
+      className={`${styles.bg} ${styles.border} ${styles.text} border rounded-lg shadow-xl p-4 min-w-80 max-w-md transition-all duration-500 ease-in-out ${
+        isFading 
+          ? 'opacity-0 transform translate-x-full scale-95' 
+          : 'opacity-100 transform translate-x-0 scale-100 animate-slide-in-right'
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
           <span className="text-lg flex-shrink-0 mt-0.5">{styles.icon}</span>
@@ -120,6 +175,22 @@ const Toast = ({ toast, onClose }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+      </div>
+      
+      {/* Progress bar showing remaining time */}
+      <div className="mt-2 w-full bg-gray-600/30 rounded-full h-1">
+        <div 
+          className={`h-1 rounded-full transition-all linear ${
+            type === 'success' ? 'bg-green-400' :
+            type === 'error' ? 'bg-red-400' :
+            type === 'warning' ? 'bg-yellow-400' :
+            'bg-blue-400'
+          }`}
+          style={{
+            width: '100%',
+            animation: `toast-progress ${toast.duration}ms linear`
+          }}
+        />
       </div>
     </div>
   );

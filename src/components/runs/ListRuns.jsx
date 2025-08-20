@@ -6,7 +6,7 @@ import RunDetails from './RunDetails';
 
 const ListRuns = () => {
   const { maps, ghosts, runs, loading, error } = useData();
-
+  const { cursedPossessions } = useData();
   const [selectedRun, setSelectedRun] = useState(null);
   const [selectedPlayerFilter, setSelectedPlayerFilter] = useState([]); // New state for exact player filter
   const [filters, setFilters] = useState({
@@ -17,16 +17,6 @@ const ListRuns = () => {
     cursedPossessionFilter: '',
     deathsFilter: ''
   });
-
-  const availableCursedPossessions = [
-    { id: 1, name: 'Tarot Deck' },
-    { id: 2, name: 'Cursed Mirror' },
-    { id: 3, name: 'Music Box' },
-    { id: 4, name: 'Summoning Circle' },
-    { id: 5, name: 'Monkey\'s Paw' },
-    { id: 6, name: 'Ouija Board' },
-    { id: 7, name: 'Voodoo Doll' }
-  ];
 
   // Get all unique dates and players from runs
   const allDates = useMemo(() => {
@@ -217,7 +207,7 @@ const ListRuns = () => {
     const cursedPossessionOptions = {
       allCount: cursedPossessionFilteredRuns.length,
       noneCount,
-      possessions: availableCursedPossessions.map(possession => ({
+      possessions: cursedPossessions.map(possession => ({
         ...possession,
         runCount: possessionCounts[possession.id] || 0
       })).sort((a, b) => b.runCount - a.runCount)
@@ -421,14 +411,14 @@ const individualPlayerCounts = useMemo(() => {
           onRunSelect={setSelectedRun}
           maps={maps}
           ghosts={ghosts}
-          availableCursedPossessions={availableCursedPossessions}
+          availableCursedPossessions={cursedPossessions}
         />
 
         <RunDetails
           selectedRun={selectedRun}
           maps={maps}
           ghosts={ghosts}
-          availableCursedPossessions={availableCursedPossessions}
+          availableCursedPossessions={cursedPossessions}
         />
       </div>
     </div>

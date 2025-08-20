@@ -1,13 +1,17 @@
+// components/Layout.jsx
 import React, { useState, useEffect } from 'react';
-import Navigation from './Navigation';
-import ListRuns from './ListRuns.jsx';
-import ManageMaps from './ManageMaps.jsx';
-import ManageGhosts from './ManageGhosts.jsx';
-import ManageEvidence from './ManageEvidence.jsx';
-import ManageCursedPossessions from './ManageCursedPossessions.jsx';
-import ManagePlayers from './ManagePlayers.jsx';
-import ManageGameModes from './ManageGameModes.jsx';
-import AddRun from './AddRun.jsx';
+import  Navigation  from './Navigation';
+
+// Import from organized folders
+import { ListRuns, AddRun } from '../runs';
+import {
+  ManageMaps,
+  ManageGhosts,
+  ManageEvidence,
+  ManageCursedPossessions,
+  ManagePlayers,
+  ManageGameModes
+} from '../manage';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('list');

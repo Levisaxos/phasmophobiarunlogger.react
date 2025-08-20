@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../hooks/useData';
+import { useData } from '../../hooks/useData';
 
 const ManageMapsPage = () => {
   const { maps, loading, error, createMap, updateMap, deleteMap, toggleMapArchived } = useData();

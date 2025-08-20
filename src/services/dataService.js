@@ -1,14 +1,14 @@
 // services/dataService.js
 // Main entry point that combines all services for backward compatibility
 
-import { baseService } from './baseService';
-import { mapsService } from './mapsService';
-import { ghostsService } from './ghostsService';
-import { playersService } from './playersService';
-import { gameModesService } from './gameModesService';
-import { runsService } from './runsService';
-import { evidenceService } from './evidenceService';
-import { cursedPossessionsService } from './cursedPossessionsService';
+import { baseService } from './api/baseService';
+import { mapsService } from './api/mapsService';
+import { ghostsService } from './api/ghostsService';
+import { playersService } from './api/playersService';
+import { gameModesService } from './api/gameModesService';
+import { runsService } from './api/runsService';
+import { evidenceService } from './api/evidenceService';
+import { cursedPossessionsService } from './api/cursedPossessionsService';
 
 export const dataService = {
   // Base operations

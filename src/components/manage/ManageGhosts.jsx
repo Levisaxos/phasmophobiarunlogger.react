@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '../hooks/useData';
+import { useData } from '../../hooks/useData';
 
 const ManageGhostsPage = () => {
   const { ghosts, evidence, loading, error, createGhost, updateGhost, deleteGhost } = useData();

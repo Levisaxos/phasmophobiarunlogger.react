@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../hooks/useData';
+import { useData } from '../../hooks/useData';
 
 const ManagePlayers = () => {
   const { players, loading, error, createPlayer, updatePlayer, deletePlayer, togglePlayerActive } = useData();

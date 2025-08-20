@@ -1,7 +1,7 @@
+// components/common/Navigation.jsx
 import React, { useState } from 'react';
-import { dataService } from '../services/dataService';
-import ClearDataModal from './ClearDataModal';
-import ClearRunDataModal from './ClearRunDataModal';
+import { dataService } from '../../services';
+import { ClearDataModal, ClearRunDataModal } from '../modals';
 
 const Navigation = ({ activeTab, setActiveTab }) => {
   const [isManageDropdownOpen, setIsManageDropdownOpen] = useState(false);
@@ -87,10 +87,7 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   };
 
   const handleClearAllData = async () => {
-    // Clear localStorage
     localStorage.removeItem('phasmophobia-data');
-    
-    // Clear service cache
     dataService.clearCache();
     
     console.log('All data cleared successfully');
@@ -100,19 +97,13 @@ const Navigation = ({ activeTab, setActiveTab }) => {
 
   const handleClearRunData = async () => {
     try {
-      // Get current data
       const currentData = await dataService.getAllData();
-      
-      // Clear only the runs array
       const clearedData = {
         ...currentData,
         runs: []
       };
       
-      // Save the data back
       localStorage.setItem('phasmophobia-data', JSON.stringify(clearedData));
-      
-      // Clear service cache
       dataService.clearCache();
       
       console.log('Run data cleared successfully');

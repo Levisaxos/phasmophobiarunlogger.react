@@ -1,90 +1,88 @@
 import React, { useState } from 'react';
-import { useData } from '../hooks/useData';
+import { useData } from '../../hooks/useData';
 
-const ManageEvidence = () => {
-  const { evidence, loading, error, createEvidence, updateEvidence, deleteEvidence, toggleEvidenceActive } = useData();
+const ManageGameModes = () => {
+  const { gameModes, loading, error, createGameMode, updateGameMode, deleteGameMode, toggleGameModeActive } = useData();
   
-  const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [selectedGameMode, setSelectedGameMode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingEvidence, setEditingEvidence] = useState({
+  const [editingGameMode, setEditingGameMode] = useState({
     name: '',
-    sequence: 1,
+    maxEvidence: 3,
     isActive: true
   });
 
   const handleAddNew = () => {
-    setEditingEvidence({
+    setEditingGameMode({
       name: '',
-      sequence: Math.max(...evidence.map(e => e.sequence || 0), 0) + 1,
+      maxEvidence: 3,
       isActive: true
     });
-    setSelectedEvidence(null);
+    setSelectedGameMode(null);
     setIsEditing(true);
   };
 
-  const handleEditEvidence = (evidenceItem) => {
-    setEditingEvidence({ ...evidenceItem });
-    setSelectedEvidence(evidenceItem);
+  const handleEditGameMode = (gameMode) => {
+    setEditingGameMode({ ...gameMode });
+    setSelectedGameMode(gameMode);
     setIsEditing(true);
   };
 
-  const handleSaveEvidence = async () => {
+  const handleSaveGameMode = async () => {
     try {
-      if (selectedEvidence) {
-        await updateEvidence(selectedEvidence.id, editingEvidence);
+      if (selectedGameMode) {
+        await updateGameMode(selectedGameMode.id, editingGameMode);
       } else {
-        await createEvidence(editingEvidence);
+        await createGameMode(editingGameMode);
       }
       setIsEditing(false);
-      setSelectedEvidence(null);
+      setSelectedGameMode(null);
     } catch (err) {
-      console.error('Error saving evidence:', err);
-      alert('Error saving evidence: ' + err.message);
+      console.error('Error saving game mode:', err);
+      alert('Error saving game mode: ' + err.message);
     }
   };
 
-  const handleDeleteEvidence = async () => {
-    if (selectedEvidence && window.confirm(`Are you sure you want to delete "${selectedEvidence.name}"? This action cannot be undone and will remove this evidence from all ghosts and runs.`)) {
+  const handleDeleteGameMode = async () => {
+    if (selectedGameMode && window.confirm(`Are you sure you want to delete "${selectedGameMode.name}"? This action cannot be undone.`)) {
       try {
-        await deleteEvidence(selectedEvidence.id);
+        await deleteGameMode(selectedGameMode.id);
         setIsEditing(false);
-        setSelectedEvidence(null);
-        setEditingEvidence({
+        setSelectedGameMode(null);
+        setEditingGameMode({
           name: '',
-          sequence: 1,
+          maxEvidence: 3,
           isActive: true
         });
       } catch (err) {
-        console.error('Error deleting evidence:', err);
-        alert('Error deleting evidence: ' + err.message);
+        console.error('Error deleting game mode:', err);
+        alert('Error deleting game mode: ' + err.message);
       }
     }
   };
 
-  const handleToggleActive = async (evidenceItem) => {
+  const handleToggleActive = async (gameMode) => {
     try {
-      await toggleEvidenceActive(evidenceItem.id);
+      await toggleGameModeActive(gameMode.id);
     } catch (err) {
-      console.error('Error toggling evidence status:', err);
+      console.error('Error toggling game mode status:', err);
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setSelectedEvidence(null);
-    setEditingEvidence({
+    setSelectedGameMode(null);
+    setEditingGameMode({
       name: '',
-      sequence: 1,
+      maxEvidence: 3,
       isActive: true
     });
   };
 
-  const sortedEvidence = [...evidence].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-300">Loading evidence...</p>
+        <p className="text-gray-300">Loading game modes...</p>
       </div>
     );
   }
@@ -92,17 +90,17 @@ const ManageEvidence = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-red-500">Error loading evidence: {error}</p>
+        <p className="text-red-500">Error loading game modes: {error}</p>
       </div>
     );
   }
 
   return (
     <div className="flex gap-6" style={{ height: 'calc(100vh - 140px)' }}>
-      {/* Left Sidebar - Evidence List */}
+      {/* Left Sidebar - Game Modes List */}
       <div className="w-80 bg-gray-700 rounded-lg shadow flex flex-col h-full">
         <div className="p-4 border-b border-gray-600 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-gray-100">Evidence Types</h3>
+          <h3 className="text-lg font-semibold text-gray-100">Game Modes</h3>
         </div>
         <div className="flex-1 overflow-y-auto min-h-0">
           <div className="p-4">
@@ -112,30 +110,30 @@ const ManageEvidence = () => {
                 onClick={handleAddNew}
                 className="w-full text-left px-3 py-3 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors duration-200 border-2 border-dashed border-green-300"
               >
-                + Add New Evidence Type
+                + Add New Game Mode
               </button>
               
-              {/* Existing Evidence */}
-              {sortedEvidence.map((evidenceItem) => (
+              {/* Existing Game Modes */}
+              {gameModes.map((gameMode) => (
                 <button
-                  key={evidenceItem.id}
-                  onClick={() => handleEditEvidence(evidenceItem)}
+                  key={gameMode.id}
+                  onClick={() => handleEditGameMode(gameMode)}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors duration-200 ${
-                    selectedEvidence?.id === evidenceItem.id && isEditing
+                    selectedGameMode?.id === gameMode.id && isEditing
                       ? 'bg-gray-500 text-gray-900'
                       : 'text-gray-300 hover:bg-gray-800 border border-gray-500'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium">{evidenceItem.name}</div>
+                      <div className="font-medium">{gameMode.name}</div>
                       <div className="text-xs text-gray-400">
-                        Sequence: {evidenceItem.sequence || 0}
+                        Max Evidence: {gameMode.maxEvidence || 3}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className={`text-xs ${evidenceItem.isActive ? 'text-green-400' : 'text-red-400'}`}>
-                        {evidenceItem.isActive ? '✓' : '✗'}
+                      <span className={`text-xs ${gameMode.isActive ? 'text-green-400' : 'text-red-400'}`}>
+                        {gameMode.isActive ? '✓' : '✗'}
                       </span>
                     </div>
                   </div>
@@ -146,45 +144,48 @@ const ManageEvidence = () => {
         </div>
       </div>
 
-      {/* Main Content Area - Evidence Editor */}
+      {/* Main Content Area - Game Mode Editor */}
       <div className="flex-1 bg-gray-700 rounded-lg shadow flex flex-col h-full">
         <div className="p-6 border-b border-gray-600 flex-shrink-0">
           <h3 className="text-xl font-semibold text-gray-100">
-            {isEditing ? (selectedEvidence ? 'Edit Evidence Type' : 'Add New Evidence Type') : 'Evidence Details'}
+            {isEditing ? (selectedGameMode ? 'Edit Game Mode' : 'Add New Game Mode') : 'Game Mode Details'}
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto min-h-0">
           <div className="p-6">
             {isEditing ? (
               <div className="space-y-6">
-                {/* Evidence Name */}
+                {/* Game Mode Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Evidence Name *
+                    Game Mode Name *
                   </label>
                   <input
                     type="text"
-                    value={editingEvidence.name}
-                    onChange={(e) => setEditingEvidence({ ...editingEvidence, name: e.target.value })}
+                    value={editingGameMode.name}
+                    onChange={(e) => setEditingGameMode({ ...editingGameMode, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter evidence name"
+                    placeholder="Enter game mode name (e.g., Amateur, Professional, Nightmare)"
                   />
                 </div>
 
-                {/* Sequence */}
+                {/* Max Evidence */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Display Sequence
+                    Maximum Evidence Count *
                   </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editingEvidence.sequence}
-                    onChange={(e) => setEditingEvidence({ ...editingEvidence, sequence: parseInt(e.target.value) || 1 })}
+                  <select
+                    value={editingGameMode.maxEvidence}
+                    onChange={(e) => setEditingGameMode({ ...editingGameMode, maxEvidence: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value={0}>0 Evidence (No evidence available)</option>
+                    <option value={1}>1 Evidence Maximum</option>
+                    <option value={2}>2 Evidence Maximum</option>
+                    <option value={3}>3 Evidence Maximum (Standard)</option>
+                  </select>
                   <p className="mt-1 text-xs text-gray-400">
-                    Controls the order this evidence appears in lists
+                    Controls how many evidence types players can find in this game mode
                   </p>
                 </div>
 
@@ -195,29 +196,29 @@ const ManageEvidence = () => {
                   </label>
                   <button
                     type="button"
-                    onClick={() => setEditingEvidence({ ...editingEvidence, isActive: !editingEvidence.isActive })}
+                    onClick={() => setEditingGameMode({ ...editingGameMode, isActive: !editingGameMode.isActive })}
                     className={`px-6 py-3 rounded-md font-medium transition-colors duration-200 flex items-center gap-2 ${
-                      editingEvidence.isActive
+                      editingGameMode.isActive
                         ? 'bg-green-600 text-white'
                         : 'bg-red-600 text-white'
                     }`}
                   >
-                    <span className="text-lg">{editingEvidence.isActive ? '✓' : '✗'}</span>
-                    {editingEvidence.isActive ? 'Active Evidence' : 'Inactive Evidence'}
+                    <span className="text-lg">{editingGameMode.isActive ? '✓' : '✗'}</span>
+                    {editingGameMode.isActive ? 'Active Game Mode' : 'Inactive Game Mode'}
                   </button>
                   <p className="mt-1 text-xs text-gray-400">
-                    Inactive evidence won't appear in evidence selection when adding runs
+                    Inactive game modes won't appear in the game mode selection when adding runs
                   </p>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4 border-t border-gray-600">
                   <button
-                    onClick={handleSaveEvidence}
-                    disabled={!editingEvidence.name.trim()}
+                    onClick={handleSaveGameMode}
+                    disabled={!editingGameMode.name.trim()}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
                   >
-                    {selectedEvidence ? 'Update Evidence' : 'Create Evidence'}
+                    {selectedGameMode ? 'Update Game Mode' : 'Create Game Mode'}
                   </button>
                   <button
                     onClick={handleCancel}
@@ -226,16 +227,16 @@ const ManageEvidence = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={handleDeleteEvidence}
+                    onClick={handleDeleteGameMode}
                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                   >
-                    Delete Evidence
+                    Delete Game Mode
                   </button>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-300 text-lg">Select evidence to edit or add a new one</p>
+                <p className="text-gray-300 text-lg">Select a game mode to edit or add a new one</p>
               </div>
             )}
           </div>
@@ -245,4 +246,4 @@ const ManageEvidence = () => {
   );
 };
 
-export default ManageEvidence;
+export default ManageGameModes;

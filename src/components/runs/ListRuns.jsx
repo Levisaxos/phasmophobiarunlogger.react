@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '../hooks/useData';
+import { useData } from '../../hooks/useData';
 import FiltersPanel from './FiltersPanel';
 import RunsList from './RunsList';
 import RunDetails from './RunDetails';

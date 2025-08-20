@@ -1,5 +1,5 @@
 import React from 'react';
-import FilterDropdown from './FilterDropdown';
+import FilterDropdown from '../common/FilterDropdown';
 
 const FiltersPanel = ({
   filters,

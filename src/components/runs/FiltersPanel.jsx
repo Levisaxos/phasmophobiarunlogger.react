@@ -105,7 +105,7 @@ const FiltersPanel = ({
               className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">All Possessions ({filterOptions.cursedPossessionOptions.allCount})</option>
-              <option value="none">No Possession Used ({filterOptions.cursedPossessionOptions.noneCount})</option>
+              <option value="none">No Possession Found ({filterOptions.cursedPossessionOptions.noneCount})</option>
               {filterOptions.cursedPossessionOptions.possessions.map((possession) => (
                 <option key={possession.id} value={possession.id}>
                   {possession.name} ({possession.runCount})

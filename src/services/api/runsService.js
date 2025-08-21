@@ -1,4 +1,4 @@
-// services/runsService.js - Clean version that stores only essential data
+// src/services/api/runsService.js - Updated with timer support
 import { baseService } from './baseService';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -74,7 +74,10 @@ export const runsService = {
       players: runData.players || [],
       
       // Game outcome
-      isPerfectGame: runData.isPerfectGame || false
+      isPerfectGame: runData.isPerfectGame || false,
+      
+      // Timer data
+      runTimeSeconds: runData.runTimeSeconds || null
     };
     
     data.runs.push(cleanRunData);
@@ -154,6 +157,20 @@ export const runsService = {
     return ghostId === actualGhostId;
   },
 
+  formatRunTime(seconds) {
+    if (!seconds || seconds === 0) return null;
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+  },
+
   // Enrich stored data with calculated fields for backward compatibility
   // This ensures all existing UI components continue to work
   enrichRunData(run) {
@@ -164,7 +181,8 @@ export const runsService = {
       playerCount: this.getPlayerCount(run.players),
       playerStates: this.getPlayerStates(run.players),
       playersLegacy: this.getPlayersLegacy(run.players),
-      wasCorrect: this.wasCorrect(run.ghostId, run.actualGhostId)
+      wasCorrect: this.wasCorrect(run.ghostId, run.actualGhostId),
+      formattedRunTime: this.formatRunTime(run.runTimeSeconds)
     };
   }
 };

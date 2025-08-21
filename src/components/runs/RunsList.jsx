@@ -1,4 +1,4 @@
-// components/runs/RunsList.jsx - Debug version
+// src/components/runs/RunsList.jsx - Updated with timer display
 import React from 'react';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { getRoomName } from '../../utils/formatUtils';
@@ -123,6 +123,12 @@ const RunsList = ({
                         <span className="font-medium">
                           Run #{run.runNumber} - {formatDate(run.date)}
                         </span>
+                        {/* Timer Display */}
+                        {run.formattedRunTime && (
+                          <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded font-mono">
+                            ⏱️ {run.formattedRunTime}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-400 space-y-1">
                         <div>{map?.name || 'Unknown Map'} - {roomName}</div>

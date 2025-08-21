@@ -1,4 +1,4 @@
-// components/runs/RunDetails.jsx
+// src/components/runs/RunDetails.jsx - Updated with timer display
 import React from 'react';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { getRoomName } from '../../utils/formatUtils';
@@ -117,6 +117,17 @@ const RunDetails = ({
                 <h4 className="text-2xl font-bold text-gray-100">
                   Run #{selectedRun.runNumber}
                 </h4>
+                {/* Run Time Display */}
+                {selectedRun.formattedRunTime && (
+                  <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg px-3 py-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-400">⏱️</span>
+                      <span className="text-blue-300 font-mono font-bold">
+                        {selectedRun.formattedRunTime}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
               <p className="text-gray-400">
                 {formatDate(selectedRun.date)} at {formatTime(selectedRun.timestamp)}

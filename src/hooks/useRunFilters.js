@@ -69,7 +69,19 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
       case 'date':
         return runs.filter(run => run.date === filterValue);
       case 'player':
-        return runs.filter(run => run.players && run.players.includes(filterValue));
+        return runs.filter(run => {
+          if (!run.players || !Array.isArray(run.players)) return false;
+          
+          return run.players.some(player => {
+            let playerName;
+            if (typeof player === 'object' && player !== null) {
+              playerName = player.name;
+            } else {
+              playerName = player;
+            }
+            return playerName === filterValue;
+          });
+        });
       case 'map':
         return runs.filter(run => run.mapId === parseInt(filterValue));
       case 'ghost':
@@ -82,18 +94,73 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
       case 'deaths':
         if (filterValue === 'none') {
           return runs.filter(run => {
-            if (!run.playerStates) return true;
-            return Object.values(run.playerStates).every(status => status === 'alive');
+            // Check if anyone died in this run
+            let hasDeaths = false;
+            
+            if (run.players && Array.isArray(run.players)) {
+              // Check new format (players with embedded status)
+              hasDeaths = run.players.some(player => {
+                if (typeof player === 'object' && player !== null) {
+                  return player.status === 'dead';
+                } else {
+                  // Legacy format - check playerStates
+                  return run.playerStates && run.playerStates[player] === 'dead';
+                }
+              });
+            } else if (run.playerStates) {
+              // Fallback to legacy playerStates only
+              hasDeaths = Object.values(run.playerStates).some(status => status === 'dead');
+            }
+            
+            return !hasDeaths; // Return runs with NO deaths
           });
         } else if (filterValue === 'any') {
           return runs.filter(run => {
-            if (!run.playerStates) return false;
-            return Object.values(run.playerStates).some(status => status === 'dead');
+            // Check if anyone died in this run
+            let hasDeaths = false;
+            
+            if (run.players && Array.isArray(run.players)) {
+              // Check new format (players with embedded status)
+              hasDeaths = run.players.some(player => {
+                if (typeof player === 'object' && player !== null) {
+                  return player.status === 'dead';
+                } else {
+                  // Legacy format - check playerStates
+                  return run.playerStates && run.playerStates[player] === 'dead';
+                }
+              });
+            } else if (run.playerStates) {
+              // Fallback to legacy playerStates only
+              hasDeaths = Object.values(run.playerStates).some(status => status === 'dead');
+            }
+            
+            return hasDeaths; // Return runs with ANY deaths
           });
         } else {
+          // Filter by specific player who died
           return runs.filter(run => {
-            if (!run.playerStates) return false;
-            return run.playerStates[filterValue] === 'dead';
+            if (run.players && Array.isArray(run.players)) {
+              // Check new format (players with embedded status)
+              return run.players.some(player => {
+                let playerName;
+                let playerStatus;
+                
+                if (typeof player === 'object' && player !== null) {
+                  playerName = player.name;
+                  playerStatus = player.status;
+                } else {
+                  playerName = player;
+                  playerStatus = run.playerStates ? run.playerStates[player] : 'alive';
+                }
+                
+                return playerName === filterValue && playerStatus === 'dead';
+              });
+            } else if (run.playerStates) {
+              // Fallback to legacy playerStates only
+              return run.playerStates[filterValue] === 'dead';
+            }
+            
+            return false;
           });
         }
       default:
@@ -141,7 +208,17 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     playerFilteredRuns.forEach(run => {
       if (run.players && Array.isArray(run.players)) {
         run.players.forEach(player => {
-          playerCounts[player] = (playerCounts[player] || 0) + 1;
+          // Extract player name consistently
+          let playerName;
+          if (typeof player === 'object' && player !== null) {
+            playerName = player.name;
+          } else {
+            playerName = player;
+          }
+          
+          if (playerName) {
+            playerCounts[playerName] = (playerCounts[playerName] || 0) + 1;
+          }
         });
       }
     });
@@ -208,20 +285,39 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     const playerDeathCounts = {};
 
     deathsFilteredRuns.forEach(run => {
-      if (!run.playerStates) {
-        noDeathsCount++;
-        return;
+      let runHasDeaths = false;
+
+      // Handle both new player format (with embedded status) and legacy format (with separate playerStates)
+      if (run.players && Array.isArray(run.players)) {
+        // Check for deaths in the new format (players array with status)
+        run.players.forEach(player => {
+          let playerName;
+          let playerStatus;
+          
+          if (typeof player === 'object' && player !== null) {
+            playerName = player.name;
+            playerStatus = player.status;
+          } else {
+            playerName = player;
+            playerStatus = run.playerStates ? run.playerStates[player] : 'alive';
+          }
+          
+          if (playerName && playerStatus === 'dead') {
+            playerDeathCounts[playerName] = (playerDeathCounts[playerName] || 0) + 1;
+            runHasDeaths = true;
+          }
+        });
+      } else if (run.playerStates) {
+        // Fallback to legacy playerStates format
+        Object.entries(run.playerStates).forEach(([playerName, status]) => {
+          if (status === 'dead') {
+            playerDeathCounts[playerName] = (playerDeathCounts[playerName] || 0) + 1;
+            runHasDeaths = true;
+          }
+        });
       }
 
-      const hasDeaths = Object.entries(run.playerStates).some(([player, status]) => {
-        if (status === 'dead') {
-          playerDeathCounts[player] = (playerDeathCounts[player] || 0) + 1;
-          return true;
-        }
-        return false;
-      });
-
-      if (hasDeaths) {
+      if (runHasDeaths) {
         anyDeathsCount++;
       } else {
         noDeathsCount++;

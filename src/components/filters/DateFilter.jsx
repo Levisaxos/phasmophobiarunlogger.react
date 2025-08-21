@@ -1,6 +1,6 @@
 // src/components/filters/DateFilter.jsx
 import React from 'react';
-import FilterDropdown from '../../common/FilterDropdown';
+import FilterDropdown from '../common/FilterDropdown';
 
 const DateFilter = ({ value, onChange, options }) => {
   const formatDate = (dateString) => {

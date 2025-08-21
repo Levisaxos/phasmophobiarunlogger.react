@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useRunFilters } from '../../hooks/useRunFilters';
-import { FiltersPanel, ExactPlayerFilter } from './filters';
+import { FiltersPanel, ExactPlayerFilter } from '../filters';
 import RunsList from './RunsList';
 import RunDetails from './RunDetails';
 

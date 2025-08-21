@@ -1,7 +1,7 @@
 
 // src/components/filters/PlayerFilter.jsx
 import React from 'react';
-import FilterDropdown from '../../common/FilterDropdown';
+import FilterDropdown from '../common/FilterDropdown';
 
 const PlayerFilter = ({ value, onChange, options }) => {
   return (

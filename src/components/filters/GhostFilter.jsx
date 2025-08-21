@@ -1,6 +1,6 @@
 // src/components/filters/GhostFilter.jsx
 import React from 'react';
-import FilterDropdown from '../../common/FilterDropdown';
+import FilterDropdown from '../common/FilterDropdown';
 
 const GhostFilter = ({ value, onChange, options }) => {
   return (

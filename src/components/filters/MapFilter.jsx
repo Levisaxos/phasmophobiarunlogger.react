@@ -1,6 +1,6 @@
 // src/components/filters/MapFilter.jsx
 import React from 'react';
-import FilterDropdown from '../../common/FilterDropdown';
+import FilterDropdown from '../common/FilterDropdown';
 
 const MapFilter = ({ value, onChange, options }) => {
   return (

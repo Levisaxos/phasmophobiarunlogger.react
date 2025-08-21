@@ -1,4 +1,4 @@
-// services/api/mapsService.js
+// services/api/mapsService.js - Updated with floor support
 import { baseService } from './baseService';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -34,21 +34,23 @@ export const mapsService = {
       throw new Error('Map with this name already exists');
     }
     
-    // Convert rooms array to normalized format with IDs
-    const roomsWithIds = (mapData.rooms || [])
-      .filter(room => room.trim()) // Remove empty rooms
-      .map((roomName, index) => ({
-        id: index + 1,
-        name: roomName.trim()
-      }));
+    // Process floors and rooms
+    const processedFloors = this.processFloors(mapData.floors || []);
+    
+    // Create legacy rooms array for backward compatibility
+    const legacyRooms = this.createLegacyRoomsArray(processedFloors);
     
     const newMap = {
       ...mapData,
       id: baseService.getNextId(data.maps),
       isArchived: false,
-      rooms: roomsWithIds,
-      // Keep legacy rooms array for backward compatibility during transition
-      roomsLegacy: mapData.rooms || []
+      floors: processedFloors,
+      // Keep legacy fields for backward compatibility
+      rooms: legacyRooms.map((roomName, index) => ({
+        id: index + 1,
+        name: roomName
+      })),
+      roomsLegacy: legacyRooms
     };
     
     data.maps.push(newMap);
@@ -70,20 +72,22 @@ export const mapsService = {
         throw new Error('Map with this name already exists');
       }
       
-      // Convert rooms array to normalized format with IDs
-      const roomsWithIds = (mapData.rooms || [])
-        .filter(room => room.trim()) // Remove empty rooms
-        .map((roomName, index) => ({
-          id: index + 1,
-          name: roomName.trim()
-        }));
+      // Process floors and rooms
+      const processedFloors = this.processFloors(mapData.floors || []);
+      
+      // Create legacy rooms array for backward compatibility
+      const legacyRooms = this.createLegacyRoomsArray(processedFloors);
       
       const updatedMap = {
         ...mapData,
         id,
-        rooms: roomsWithIds,
-        // Keep legacy rooms array for backward compatibility
-        roomsLegacy: mapData.rooms || []
+        floors: processedFloors,
+        // Keep legacy fields for backward compatibility
+        rooms: legacyRooms.map((roomName, index) => ({
+          id: index + 1,
+          name: roomName
+        })),
+        roomsLegacy: legacyRooms
       };
       
       data.maps[index] = updatedMap;
@@ -125,5 +129,94 @@ export const mapsService = {
     }
     
     throw new Error('Map not found');
+  },
+
+  // Helper method to process floors and ensure they have proper structure
+  processFloors(floors) {
+    if (!floors || !Array.isArray(floors)) {
+      return [{
+        id: 1,
+        name: 'Ground Floor',
+        order: 0, // Ground floor is order 0
+        rooms: []
+      }];
+    }
+
+    return floors.map(floor => ({
+      id: floor.id || Date.now() + Math.random(),
+      name: floor.name || 'Unnamed Floor',
+      order: floor.order !== undefined ? floor.order : 0, // Default to ground floor (0)
+      rooms: (floor.rooms || []).filter(room => room && room.trim())
+    })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  },
+
+  // Helper method to create legacy rooms array from floors for backward compatibility
+  createLegacyRoomsArray(floors) {
+    const allRooms = [];
+    
+    // Sort floors by order first
+    const sortedFloors = [...floors].sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    sortedFloors.forEach(floor => {
+      if (floor.rooms && Array.isArray(floor.rooms)) {
+        allRooms.push(...floor.rooms.filter(room => room && room.trim()));
+      }
+    });
+    
+    return allRooms;
+  },
+
+  // Helper method to get all rooms from a map (handles both floor and legacy format)
+  getAllRoomsFromMap(map) {
+    if (map.floors && Array.isArray(map.floors)) {
+      // New format: extract rooms from floors, maintaining floor order
+      const sortedFloors = [...map.floors].sort((a, b) => (a.order || 0) - (b.order || 0));
+      const roomsWithFloor = [];
+      
+      sortedFloors.forEach(floor => {
+        if (floor.rooms && Array.isArray(floor.rooms)) {
+          floor.rooms.forEach(roomName => {
+            if (roomName && roomName.trim()) {
+              roomsWithFloor.push({
+                name: roomName.trim(),
+                floorName: floor.name,
+                floorOrder: floor.order || 0
+              });
+            }
+          });
+        }
+      });
+      
+      return roomsWithFloor;
+    } else if (map.rooms && Array.isArray(map.rooms) && map.rooms.length > 0 && typeof map.rooms[0] === 'object') {
+      // Legacy new format: rooms with IDs
+      return map.rooms
+        .filter(room => room.name && room.name.trim())
+        .map(room => ({
+          name: room.name.trim(),
+          floorName: 'Ground Floor',
+          floorOrder: 1
+        }));
+    } else if (map.rooms && Array.isArray(map.rooms)) {
+      // Legacy format: array of strings
+      return map.rooms
+        .filter(room => room && room.trim())
+        .map(roomName => ({
+          name: roomName.trim(),
+          floorName: 'Ground Floor',
+          floorOrder: 0 // Ground floor is order 0
+        }));
+    } else if (map.roomsLegacy && Array.isArray(map.roomsLegacy)) {
+      // Fallback to legacy rooms
+      return map.roomsLegacy
+        .filter(room => room && room.trim())
+        .map(roomName => ({
+          name: roomName.trim(),
+          floorName: 'Ground Floor',
+          floorOrder: 0 // Ground floor is order 0
+        }));
+    }
+    
+    return [];
   }
 };

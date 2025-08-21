@@ -8,6 +8,7 @@ export const useAddRunForm = () => {
 
   // Form state
   const [selectedMap, setSelectedMap] = useState(null);
+  const [selectedFloor, setSelectedFloor] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
   const [selectedCursedPossession, setSelectedCursedPossession] = useState('');
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState([]);
@@ -29,8 +30,9 @@ export const useAddRunForm = () => {
     setPlayerStates(newPlayerStates);
   }, [todaysPlayers]);
 
-  // Reset room when map changes
+  // Reset room and floor when map changes
   useEffect(() => {
+    setSelectedFloor('');
     setSelectedRoom('');
   }, [selectedMap]);
 
@@ -46,6 +48,10 @@ export const useAddRunForm = () => {
 
   const handleMapChange = (map) => {
     setSelectedMap(map);
+  };
+
+  const handleFloorChange = (floor) => {
+    setSelectedFloor(floor);
   };
 
   const handleRoomChange = (room) => {
@@ -106,6 +112,7 @@ export const useAddRunForm = () => {
 
   const resetForm = () => {
     setSelectedMap(null);
+    setSelectedFloor('');
     setSelectedRoom('');
     setSelectedCursedPossession('');
     setSelectedEvidenceIds([]);
@@ -182,6 +189,7 @@ export const useAddRunForm = () => {
     todaysPlayers,
     showPlayersModal,
     selectedMap,
+    selectedFloor,
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
@@ -204,6 +212,7 @@ export const useAddRunForm = () => {
     handleTodaysPlayersConfirm,
     handleChangePlayersClick,
     handleMapChange,
+    handleFloorChange,
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,

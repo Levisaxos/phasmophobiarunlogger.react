@@ -34,6 +34,7 @@ const AddRun = () => {
 
   const {
     // State
+    selectedFloor,
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
@@ -50,6 +51,7 @@ const AddRun = () => {
     setIsSaving,
     
     // Handlers
+    handleFloorChange,
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,
@@ -78,25 +80,48 @@ const AddRun = () => {
       .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
   }, [cursedPossessions]);
 
-  // Get available rooms from the session map
-  const availableRooms = useMemo(() => {
-    if (!sessionData?.map) return [];
+  // Get available rooms from the session map with floor support
+  const { roomsByFloor, sortedFloors, groundFloor } = useMemo(() => {
+    if (!sessionData?.map) return { roomsByFloor: {}, sortedFloors: [], groundFloor: null };
     
     const map = sessionData.map;
-    if (map.rooms && Array.isArray(map.rooms) && map.rooms.length > 0 && typeof map.rooms[0] === 'object') {
-      // New format: rooms with IDs
-      return map.rooms
-        .filter(room => room.name && room.name.trim())
-        .sort((a, b) => a.name.localeCompare(b.name));
-    } else if (map.rooms && Array.isArray(map.rooms)) {
-      // Legacy format: array of strings
-      return map.rooms
-        .filter(room => room && room.trim())
-        .sort((a, b) => a.localeCompare(b))
-        .map((roomName, index) => ({ id: index + 1, name: roomName }));
+    const roomsWithFloors = maps.find(m => m.id === map.id) ? 
+      require('../../services/api/mapsService').mapsService.getAllRoomsFromMap(maps.find(m => m.id === map.id)) : [];
+    
+    // Group rooms by floor and sort by floor order
+    const roomsByFloor = roomsWithFloors.reduce((acc, roomData) => {
+      const floorName = roomData.floorName;
+      if (!acc[floorName]) {
+        acc[floorName] = {
+          order: roomData.floorOrder,
+          rooms: []
+        };
+      }
+      acc[floorName].rooms.push(roomData.name);
+      return acc;
+    }, {});
+
+    // Sort floors by order and rooms alphabetically within each floor
+    const sortedFloors = Object.entries(roomsByFloor)
+      .sort(([, a], [, b]) => a.order - b.order)
+      .map(([floorName, floorData]) => ({
+        name: floorName,
+        order: floorData.order,
+        rooms: floorData.rooms.sort((a, b) => a.localeCompare(b))
+      }));
+    
+    // Find the ground floor (order 0) for auto-selection
+    const groundFloor = sortedFloors.find(floor => floor.order === 0);
+    
+    return { roomsByFloor, sortedFloors, groundFloor };
+  }, [sessionData?.map, maps]);
+
+  // Auto-select ground floor when map changes
+  useEffect(() => {
+    if (groundFloor && !selectedFloor) {
+      handleFloorChange(groundFloor.name);
     }
-    return [];
-  }, [sessionData?.map]);
+  }, [groundFloor, selectedFloor, handleFloorChange]);
 
   // Get the maximum evidence allowed by the session game mode
   const maxEvidence = sessionData?.gameMode?.maxEvidence ?? 3;
@@ -241,9 +266,32 @@ const AddRun = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Room Selection, Perfect Game, and Timer Row */}
+        {/* Floor and Room Selection Row */}
         <div className="flex items-end gap-6">
-          {/* Room Selection - Takes remaining space */}
+          {/* Floor Selection */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Select Floor
+            </label>
+            <select
+              value={selectedFloor}
+              onChange={(e) => {
+                handleFloorChange(e.target.value);
+                // Reset room when floor changes
+                handleRoomChange('');
+              }}
+              className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All floors (optional)...</option>
+              {sortedFloors.map((floor) => (
+                <option key={floor.name} value={floor.name}>
+                  {floor.name} ({floor.rooms.length} rooms)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Room Selection */}
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Select Room
@@ -253,12 +301,33 @@ const AddRun = () => {
               onChange={(e) => handleRoomChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Choose a room (optional)...</option>
-              {availableRooms.map((room) => (
-                <option key={room.id || room.name} value={room.name}>
-                  {room.name}
-                </option>
-              ))}
+              <option value="">
+                {selectedFloor 
+                  ? `Choose a room on ${selectedFloor} (optional)...`
+                  : "Choose a room (optional)..."
+                }
+              </option>
+              {selectedFloor ? (
+                // Show only rooms from selected floor
+                sortedFloors
+                  .find(floor => floor.name === selectedFloor)?.rooms
+                  .map((roomName) => (
+                    <option key={roomName} value={roomName}>
+                      {roomName}
+                    </option>
+                  )) || []
+              ) : (
+                // Show all rooms grouped by floor
+                sortedFloors.map((floor) => (
+                  <optgroup key={floor.name} label={floor.name}>
+                    {floor.rooms.map((roomName) => (
+                      <option key={`${floor.name}-${roomName}`} value={roomName}>
+                        {roomName}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))
+              )}
             </select>
           </div>
 

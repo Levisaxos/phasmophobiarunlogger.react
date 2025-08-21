@@ -1,4 +1,4 @@
-// src/hooks/useRunFilters.js
+// src/hooks/useRunFilters.js - Fixed exact player matching
 import { useState, useMemo } from 'react';
 
 export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
@@ -50,15 +50,37 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     return playersArray;
   }, [runs]);
 
+  // Helper function to extract player names from a run
+  const getPlayerNamesFromRun = (run) => {
+    const playerNames = [];
+    if (run.players && Array.isArray(run.players)) {
+      run.players.forEach(player => {
+        let playerName;
+        if (typeof player === 'object' && player !== null) {
+          playerName = player.name;
+        } else {
+          playerName = player;
+        }
+        if (playerName) {
+          playerNames.push(String(playerName));
+        }
+      });
+    }
+    return playerNames.sort(); // Sort for consistent comparison
+  };
+
   // Helper function to check if run matches exact player selection
   const matchesExactPlayers = (run, selectedPlayers) => {
     if (selectedPlayers.length === 0) return true;
 
-    const runPlayers = run.players || [];
-    if (runPlayers.length !== selectedPlayers.length) return false;
-
-    return selectedPlayers.every(player => runPlayers.includes(player)) &&
-      runPlayers.every(player => selectedPlayers.includes(player));
+    const runPlayers = getPlayerNamesFromRun(run);
+    const sortedSelectedPlayers = [...selectedPlayers].sort(); // Sort for consistent comparison
+    
+    // Must have same length and same players
+    if (runPlayers.length !== sortedSelectedPlayers.length) return false;
+    
+    // Check if arrays are identical (both are sorted)
+    return runPlayers.every((player, index) => player === sortedSelectedPlayers[index]);
   };
 
   // Helper function to apply a single filter to runs
@@ -70,17 +92,8 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
         return runs.filter(run => run.date === filterValue);
       case 'player':
         return runs.filter(run => {
-          if (!run.players || !Array.isArray(run.players)) return false;
-          
-          return run.players.some(player => {
-            let playerName;
-            if (typeof player === 'object' && player !== null) {
-              playerName = player.name;
-            } else {
-              playerName = player;
-            }
-            return playerName === filterValue;
-          });
+          const runPlayers = getPlayerNamesFromRun(run);
+          return runPlayers.includes(filterValue);
         });
       case 'map':
         return runs.filter(run => run.mapId === parseInt(filterValue));
@@ -206,21 +219,10 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     const playerFilteredRuns = getFilteredRunsExcluding('player');
     const playerCounts = {};
     playerFilteredRuns.forEach(run => {
-      if (run.players && Array.isArray(run.players)) {
-        run.players.forEach(player => {
-          // Extract player name consistently
-          let playerName;
-          if (typeof player === 'object' && player !== null) {
-            playerName = player.name;
-          } else {
-            playerName = player;
-          }
-          
-          if (playerName) {
-            playerCounts[playerName] = (playerCounts[playerName] || 0) + 1;
-          }
-        });
-      }
+      const runPlayers = getPlayerNamesFromRun(run);
+      runPlayers.forEach(playerName => {
+        playerCounts[playerName] = (playerCounts[playerName] || 0) + 1;
+      });
     });
     const playerOptions = {
       allCount: playerFilteredRuns.length,
@@ -248,7 +250,9 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     const ghostFilteredRuns = getFilteredRunsExcluding('ghost');
     const ghostCounts = {};
     ghostFilteredRuns.forEach(run => {
-      ghostCounts[run.ghostId] = (ghostCounts[run.ghostId] || 0) + 1;
+      if (run.ghostId) { // Only count runs that have a ghost
+        ghostCounts[run.ghostId] = (ghostCounts[run.ghostId] || 0) + 1;
+      }
     });
     const ghostOptions = {
       allCount: ghostFilteredRuns.length,
@@ -371,20 +375,10 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     const counts = {};
     
     baseFilteredRuns.forEach(run => {
-      if (run.players && Array.isArray(run.players)) {
-        run.players.forEach(player => {
-          let playerName;
-          if (typeof player === 'object' && player !== null) {
-            playerName = player.name;
-          } else {
-            playerName = player;
-          }
-          
-          if (playerName) {
-            counts[playerName] = (counts[playerName] || 0) + 1;
-          }
-        });
-      }
+      const runPlayers = getPlayerNamesFromRun(run);
+      runPlayers.forEach(playerName => {
+        counts[playerName] = (counts[playerName] || 0) + 1;
+      });
     });
     
     return counts;

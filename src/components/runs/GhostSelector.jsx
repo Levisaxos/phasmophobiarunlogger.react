@@ -1,10 +1,11 @@
-// components/AddRun/GhostSelector.jsx
+// components/AddRun/GhostSelector.jsx - Updated to handle excluded evidence
 import React from 'react';
 
 const GhostSelector = ({
   ghosts,
   evidence,
   selectedEvidenceIds,
+  excludedEvidenceIds = [],
   selectedGhost,
   actualGhost,
   excludedGhosts,
@@ -12,13 +13,20 @@ const GhostSelector = ({
   onActualGhostSelect,
   onGhostExclude
 }) => {
-  // Filter ghosts based on selected evidence
-  const filteredGhosts = selectedEvidenceIds.length === 0
-    ? ghosts
-    : ghosts.filter(ghost => {
-      const ghostEvidenceIds = ghost.evidenceIds || [];
-      return selectedEvidenceIds.every(evidenceId => ghostEvidenceIds.includes(evidenceId));
-    });
+  // Filter ghosts based on selected AND excluded evidence
+  const filteredGhosts = ghosts.filter(ghost => {
+    const ghostEvidenceIds = ghost.evidenceIds || [];
+    
+    // Ghost must have all selected evidence
+    const hasAllSelectedEvidence = selectedEvidenceIds.length === 0 || 
+      selectedEvidenceIds.every(evidenceId => ghostEvidenceIds.includes(evidenceId));
+    
+    // Ghost must NOT have any excluded evidence
+    const hasNoExcludedEvidence = excludedEvidenceIds.length === 0 ||
+      !excludedEvidenceIds.some(evidenceId => ghostEvidenceIds.includes(evidenceId));
+    
+    return hasAllSelectedEvidence && hasNoExcludedEvidence;
+  });
 
   const wasCorrect = selectedGhost && actualGhost ? selectedGhost.id === actualGhost.id : true;
 
@@ -63,16 +71,15 @@ const GhostSelector = ({
   return (
     <div>
       <div className='flex gap-2'>
-        
         <label className="block text-sm font-medium text-gray-300 mb-2 flex-1">
           Select Ghosts
         </label>
-          <p className="text-xs text-gray-400 align-middle">
-            {selectedEvidenceIds.length === 0
-              ? `All ${ghosts.length} ghosts available`
-              : `${filteredGhosts.length} ghosts match selected evidence`
-            }
-          </p>
+        <p className="text-xs text-gray-400 align-middle">
+          {selectedEvidenceIds.length === 0 && excludedEvidenceIds.length === 0
+            ? `All ${ghosts.length} ghosts available`
+            : `${filteredGhosts.length} ghosts match evidence criteria`
+          }
+        </p>
       </div>
 
       {/* Ghost Grid - 3 columns, up to 8 rows */}
@@ -82,8 +89,15 @@ const GhostSelector = ({
           const isActual = actualGhost?.id === ghost.id;
           const isExcluded = excludedGhosts.includes(ghost.id);
           const isBoth = isGuessed && isActual;
+          
+          // Check if ghost matches evidence criteria
+          const ghostEvidenceIds = ghost.evidenceIds || [];
           const hasMatchingEvidence = selectedEvidenceIds.length === 0 ||
-            selectedEvidenceIds.every(evidenceId => ghost.evidenceIds?.includes(evidenceId));
+            selectedEvidenceIds.every(evidenceId => ghostEvidenceIds.includes(evidenceId));
+          const hasExcludedEvidence = excludedEvidenceIds.length > 0 &&
+            excludedEvidenceIds.some(evidenceId => ghostEvidenceIds.includes(evidenceId));
+          
+          const meetsEvidenceCriteria = hasMatchingEvidence && !hasExcludedEvidence;
 
           // Determine styling based on selection state
           let buttonStyle = '';
@@ -110,13 +124,13 @@ const GhostSelector = ({
             buttonStyle = 'bg-gray-900 border-gray-600 text-gray-500';
             nameStyle = 'text-gray-500 line-through';
             evidenceStyle = 'bg-gray-900/50';
-          } else if (hasMatchingEvidence) {
-            // Default - matches evidence
+          } else if (meetsEvidenceCriteria) {
+            // Default - matches evidence criteria
             buttonStyle = 'bg-gray-700 border-gray-500 text-gray-300 hover:bg-gray-600';
             nameStyle = 'text-gray-300';
             evidenceStyle = 'bg-gray-800/50';
           } else {
-            // Doesn't match evidence - darkened
+            // Doesn't match evidence criteria - darkened and disabled
             buttonStyle = 'bg-gray-900 border-gray-600 text-gray-500 cursor-default';
             nameStyle = 'text-gray-500';
             evidenceStyle = 'bg-gray-900/50';
@@ -132,8 +146,9 @@ const GhostSelector = ({
             <button
               key={ghost.id}
               type="button"
-              onClick={() => handleGhostClick(ghost)}
+              onClick={() => meetsEvidenceCriteria && handleGhostClick(ghost)}
               onContextMenu={(e) => handleGhostRightClick(e, ghost)}
+              disabled={!meetsEvidenceCriteria && !isGuessed && !isActual && !isExcluded}
               className={`p-0 text-xs rounded-md border transition-all duration-200 min-h-[70px] flex overflow-hidden ${buttonStyle}`}
             >
               {/* Left: Ghost Name - 70% width, centered */}

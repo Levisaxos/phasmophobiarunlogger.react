@@ -1,8 +1,8 @@
-// src/components/session/SessionSetup.jsx
+// src/components/session/SessionSetup.jsx - Updated to support initial data
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 
-const SessionSetup = ({ onStartSession }) => {
+const SessionSetup = ({ onStartSession, initialData = null }) => {
   const { maps, players: allPlayers, gameModes, loading, error } = useData();
   
   // Session setup state
@@ -33,49 +33,61 @@ const SessionSetup = ({ onStartSession }) => {
   const activeGameModes = useMemo(() => gameModes.filter(gm => gm.isActive), [gameModes]);
   const activePlayers = useMemo(() => allPlayers.filter(p => p.isActive), [allPlayers]);
 
-  // Load saved session preferences on mount
+  // Load initial data or saved session preferences on mount
   useEffect(() => {
-    const savedPreferences = localStorage.getItem('phasmophobia-session-preferences');
-    let hasLoadedPreferences = false;
-    
-    if (savedPreferences) {
-      try {
-        const preferences = JSON.parse(savedPreferences);
-        
-        // Restore players
-        if (preferences.players && Array.isArray(preferences.players)) {
-          setSelectedPlayers(preferences.players);
-          hasLoadedPreferences = true;
+    if (initialData) {
+      // Use initial data (from previous session)
+      if (initialData.players && Array.isArray(initialData.players)) {
+        setSelectedPlayers(initialData.players);
+      }
+      if (initialData.gameMode && activeGameModes.find(gm => gm.id === initialData.gameMode.id)) {
+        setSelectedGameMode(initialData.gameMode.id);
+      }
+      // Map is intentionally not restored - user needs to select a new map
+    } else {
+      // Load saved preferences
+      const savedPreferences = localStorage.getItem('phasmophobia-session-preferences');
+      let hasLoadedPreferences = false;
+      
+      if (savedPreferences) {
+        try {
+          const preferences = JSON.parse(savedPreferences);
+          
+          // Restore players
+          if (preferences.players && Array.isArray(preferences.players)) {
+            setSelectedPlayers(preferences.players);
+            hasLoadedPreferences = true;
+          }
+          
+          // Restore game mode
+          if (preferences.gameModeId && activeGameModes.find(gm => gm.id === preferences.gameModeId)) {
+            setSelectedGameMode(preferences.gameModeId);
+          }
+        } catch (error) {
+          console.error('Failed to load session preferences:', error);
         }
-        
-        // Restore game mode
-        if (preferences.gameModeId && activeGameModes.find(gm => gm.id === preferences.gameModeId)) {
-          setSelectedGameMode(preferences.gameModeId);
+      }
+
+      // Only load default players if no preferences were loaded and no players are currently selected
+      if (!hasLoadedPreferences && selectedPlayers.length === 0) {
+        const defaultPlayers = activePlayers.filter(p => p.isDefault);
+        if (defaultPlayers.length > 0) {
+          setSelectedPlayers(defaultPlayers.map(p => p.name));
         }
-      } catch (error) {
-        console.error('Failed to load session preferences:', error);
       }
     }
+  }, [activeGameModes, initialData]); // Added initialData dependency
 
-    // Only load default players if no preferences were loaded and no players are currently selected
-    if (!hasLoadedPreferences && selectedPlayers.length === 0) {
-      const defaultPlayers = activePlayers.filter(p => p.isDefault);
-      if (defaultPlayers.length > 0) {
-        setSelectedPlayers(defaultPlayers.map(p => p.name));
-      }
-    }
-  }, [activeGameModes]); // Removed selectedPlayers.length and activePlayers dependencies
-
-  // Save preferences when they change
+  // Save preferences when they change (but not when loading initial data)
   useEffect(() => {
-    if (selectedPlayers.length > 0 || selectedGameMode) {
+    if (!initialData && (selectedPlayers.length > 0 || selectedGameMode)) {
       const preferences = {
         players: selectedPlayers,
         gameModeId: selectedGameMode
       };
       localStorage.setItem('phasmophobia-session-preferences', JSON.stringify(preferences));
     }
-  }, [selectedPlayers, selectedGameMode]);
+  }, [selectedPlayers, selectedGameMode, initialData]);
 
   const handlePlayerToggle = (playerName) => {
     setSelectedPlayers(prev => {
@@ -126,6 +138,17 @@ const SessionSetup = ({ onStartSession }) => {
 
   return (
     <div className="bg-gray-700 rounded-lg shadow p-4 max-w-6xl mx-auto">
+      {/* Header message if continuing session */}
+      {initialData && (
+        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-600/30 rounded-md">
+          <h3 className="text-lg font-semibold text-blue-400 mb-2">🎯 Continue Session</h3>
+          <p className="text-blue-300 text-sm">
+            Run completed! Your players and game mode have been preserved. 
+            Select a new map to start your next run.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-6">
         {/* Players Section */}
         <div>
@@ -230,7 +253,14 @@ const SessionSetup = ({ onStartSession }) => {
 
         {/* Map Selection */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-100 mb-3">Select Map</h3>
+          <h3 className="text-lg font-semibold text-gray-100 mb-3">
+            Select Map
+            {initialData && (
+              <span className="ml-2 text-sm font-normal text-blue-400">
+                (Choose your next map)
+              </span>
+            )}
+          </h3>
           {activeMaps.length === 0 ? (
             <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-md p-3">
               <p className="text-yellow-400 text-sm">
@@ -298,12 +328,18 @@ const SessionSetup = ({ onStartSession }) => {
             className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2 mx-auto"
           >
             <span className="text-xl">🎯</span>
-            {canStartSession ? 'Start Session' : 'Complete Setup to Start'}
+            {initialData 
+              ? (canStartSession ? 'Start Next Run' : 'Select Map to Continue') 
+              : (canStartSession ? 'Start Session' : 'Complete Setup to Start')
+            }
           </button>
           
           {!canStartSession && (
             <p className="mt-2 text-xs text-gray-400">
-              Please select players, difficulty, and map to start your session
+              {initialData 
+                ? 'Please select a map to start your next run'
+                : 'Please select players, difficulty, and map to start your session'
+              }
             </p>
           )}
         </div>

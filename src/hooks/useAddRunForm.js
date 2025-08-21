@@ -1,4 +1,4 @@
-// hooks/useAddRunForm.js
+// hooks/useAddRunForm.js - Updated with evidence exclusion support
 import { useState, useEffect } from 'react';
 
 export const useAddRunForm = () => {
@@ -11,6 +11,7 @@ export const useAddRunForm = () => {
   const [selectedRoom, setSelectedRoom] = useState('');
   const [selectedCursedPossession, setSelectedCursedPossession] = useState('');
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState([]);
+  const [excludedEvidenceIds, setExcludedEvidenceIds] = useState([]); // New state for excluded evidence
   const [selectedGhost, setSelectedGhost] = useState(null);
   const [actualGhost, setActualGhost] = useState(null);
   const [excludedGhosts, setExcludedGhosts] = useState([]);
@@ -63,6 +64,15 @@ export const useAddRunForm = () => {
     }
   };
 
+  // New handler for evidence exclusion
+  const handleEvidenceExclude = (evidenceId, isExcluding) => {
+    if (isExcluding) {
+      setExcludedEvidenceIds(prev => [...prev, evidenceId]);
+    } else {
+      setExcludedEvidenceIds(prev => prev.filter(id => id !== evidenceId));
+    }
+  };
+
   const handleGhostSelect = (ghost) => {
     setSelectedGhost(ghost);
   };
@@ -99,6 +109,7 @@ export const useAddRunForm = () => {
     setSelectedRoom('');
     setSelectedCursedPossession('');
     setSelectedEvidenceIds([]);
+    setExcludedEvidenceIds([]); // Reset excluded evidence
     setSelectedGhost(null);
     setActualGhost(null);
     setExcludedGhosts([]);
@@ -114,7 +125,7 @@ export const useAddRunForm = () => {
   };
 
   // Create normalized run data for saving
-  const createRunData = (allPlayers, selectedGameModeObj, selectedCursedPossessionObj) => {
+  const createRunData = (allPlayers, sessionData, selectedGameModeObj, selectedCursedPossessionObj) => {
     const finalActualGhost = actualGhost || selectedGhost;
     
     // Convert player names to player data with status
@@ -127,37 +138,38 @@ export const useAddRunForm = () => {
       };
     });
 
-    // Find room ID from selected map
+    // Find room ID from session map
     let roomId = null;
-    if (selectedMap && selectedRoom) {
+    if (sessionData?.map && selectedRoom) {
+      const sessionMap = sessionData.map;
       // Handle both new room format (with IDs) and legacy format (array of strings)
-      if (selectedMap.rooms && Array.isArray(selectedMap.rooms) && typeof selectedMap.rooms[0] === 'object') {
+      if (sessionMap.rooms && Array.isArray(sessionMap.rooms) && typeof sessionMap.rooms[0] === 'object') {
         // New format: rooms with IDs
-        const room = selectedMap.rooms.find(r => r.name === selectedRoom);
+        const room = sessionMap.rooms.find(r => r.name === selectedRoom);
         roomId = room?.id || null;
-      } else if (selectedMap.rooms && Array.isArray(selectedMap.rooms)) {
+      } else if (sessionMap.rooms && Array.isArray(sessionMap.rooms)) {
         // Legacy format: find index + 1 as ID
-        const roomIndex = selectedMap.rooms.indexOf(selectedRoom);
+        const roomIndex = sessionMap.rooms.indexOf(selectedRoom);
         roomId = roomIndex >= 0 ? roomIndex + 1 : null;
       }
     }
 
     return {
-      // Core identifiers (IDs only)
-      mapId: selectedMap.id,
+      // Core identifiers (IDs only) - use session data
+      mapId: sessionData?.map?.id || null,
       roomId: roomId,
-      roomName: selectedRoom, // Keep name for backward compatibility during transition
+      roomName: selectedRoom || null, // Allow null room
       cursedPossessionId: selectedCursedPossession || null,
       evidenceIds: [...selectedEvidenceIds],
-      ghostId: selectedGhost.id,
-      actualGhostId: finalActualGhost.id,
-      gameModeId: selectedGameModeObj?.id || null,
+      ghostId: selectedGhost?.id || null, // Allow null ghost
+      actualGhostId: finalActualGhost?.id || null, // Allow null actual ghost
+      gameModeId: sessionData?.gameMode?.id || null,
       
       // Player data with embedded status
       players: playersData,
       
-      // Game outcome
-      wasCorrect: selectedGhost.id === finalActualGhost.id,
+      // Game outcome (only meaningful if both ghosts are selected)
+      wasCorrect: selectedGhost && finalActualGhost ? selectedGhost.id === finalActualGhost.id : null,
       isPerfectGame: isPerfectGame,
       
       // Timestamp (date will be derived from this)
@@ -173,6 +185,7 @@ export const useAddRunForm = () => {
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
+    excludedEvidenceIds, // Expose excluded evidence state
     selectedGhost,
     actualGhost,
     excludedGhosts,
@@ -194,6 +207,7 @@ export const useAddRunForm = () => {
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,
+    handleEvidenceExclude, // New handler for evidence exclusion
     handleGhostSelect,
     handleActualGhostSelect,
     handleGhostExclude,

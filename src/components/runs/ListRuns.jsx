@@ -1,4 +1,4 @@
-// src/components/runs/ListRuns.jsx
+// src/components/runs/ListRuns.jsx - Updated to pass additional props
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useRunFilters } from '../../hooks/useRunFilters';
@@ -7,7 +7,7 @@ import RunsList from './RunsList';
 import RunDetails from './RunDetails';
 
 const ListRuns = () => {
-  const { maps, ghosts, runs, cursedPossessions, loading, error } = useData();
+  const { maps, ghosts, runs, evidence, gameModes, cursedPossessions, loading, error } = useData();
   const [selectedRun, setSelectedRun] = useState(null);
 
   const {
@@ -72,6 +72,8 @@ const ListRuns = () => {
           selectedRun={selectedRun}
           maps={maps}
           ghosts={ghosts}
+          evidence={evidence}
+          gameModes={gameModes}
           availableCursedPossessions={cursedPossessions}
         />
       </div>

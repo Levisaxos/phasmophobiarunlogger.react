@@ -1,12 +1,14 @@
-// src/components/runs/RunDetails.jsx - Updated with timer display
+// src/components/runs/RunDetails.jsx - Fixed with all missing information
 import React from 'react';
 import { formatDate, formatTime } from '../../utils/dateUtils';
-import { getRoomName } from '../../utils/formatUtils';
+import { getRoomName, getEvidenceNames } from '../../utils/formatUtils';
 
 const RunDetails = ({
   selectedRun,
   maps,
   ghosts,
+  evidence,
+  gameModes,
   availableCursedPossessions
 }) => {
   if (!selectedRun) {
@@ -30,10 +32,14 @@ const RunDetails = ({
   const map = maps.find(m => m.id === selectedRun.mapId);
   const ghost = ghosts.find(g => g.id === selectedRun.ghostId);
   const actualGhost = ghosts.find(g => g.id === selectedRun.actualGhostId);
+  const gameMode = gameModes.find(gm => gm.id === selectedRun.gameModeId);
   const cursedPossession = selectedRun.cursedPossessionId ? 
     availableCursedPossessions.find(p => p.id === selectedRun.cursedPossessionId) : null;
 
   const roomName = getRoomName(selectedRun, map);
+  
+  // Get evidence names from the run's evidence IDs
+  const foundEvidenceNames = getEvidenceNames(selectedRun.evidenceIds || [], evidence);
 
   // Format players section
   const renderPlayersSection = () => {
@@ -132,6 +138,12 @@ const RunDetails = ({
               <p className="text-gray-400">
                 {formatDate(selectedRun.date)} at {formatTime(selectedRun.timestamp)}
               </p>
+              {/* Game Mode Display */}
+              {gameMode && (
+                <p className="text-gray-300 mt-1">
+                  <span className="text-gray-400">Difficulty:</span> {gameMode.name} (Max {gameMode.maxEvidence || 0} evidence)
+                </p>
+              )}
             </div>
 
             {/* Basic Information */}
@@ -177,31 +189,53 @@ const RunDetails = ({
                     ) : (
                       // Incorrect guess - show crossed out in red, then actual ghost in green
                       <div>
-                        <p className="text-lg font-medium text-red-500 line-through">
-                          {ghost?.name || 'Unknown Ghost'}
-                        </p>
+                        {ghost && (
+                          <p className="text-lg font-medium text-red-500 line-through">
+                            {ghost.name}
+                          </p>
+                        )}
                         <p className="text-lg font-medium text-green-500 mt-1">
                           {actualGhost?.name || 'Unknown Ghost'}
                         </p>
                       </div>
                     )}
 
-                    {(actualGhost?.evidence || actualGhost?.evidenceIds) && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-400 mb-1">Known Evidence:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {/* Handle both legacy and new evidence formats */}
-                          {(actualGhost.evidence || []).map((evidence, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-gray-600 text-gray-200 text-xs rounded"
-                            >
-                              {evidence}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {/* Show evidence for the actual ghost (or guessed ghost if correct) */}
+                    {(() => {
+                      const displayGhost = actualGhost || ghost;
+                      if (displayGhost?.evidenceIds) {
+                        const ghostEvidenceNames = getEvidenceNames(displayGhost.evidenceIds, evidence);
+                        
+                        if (ghostEvidenceNames.length > 0) {
+                          return (
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-400 mb-1">Known Evidence:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {ghostEvidenceNames.map((evidenceName, index) => {
+                                  // Check if this evidence was found in the run
+                                  const wasFound = foundEvidenceNames.includes(evidenceName);
+                                  
+                                  return (
+                                    <span
+                                      key={index}
+                                      className={`px-2 py-1 text-xs rounded ${
+                                        wasFound 
+                                          ? 'bg-blue-600 text-white border border-blue-400' 
+                                          : 'bg-gray-600 text-gray-200'
+                                      }`}
+                                    >
+                                      {evidenceName}
+                                      {wasFound && ' ✓'}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -210,27 +244,17 @@ const RunDetails = ({
                 <div>
                   <h5 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-2">Evidence Found</h5>
                   <div className="bg-gray-800 rounded-lg p-4">
-                    {(selectedRun.evidence && selectedRun.evidence.length > 0) || cursedPossession ? (
+                    {foundEvidenceNames.length > 0 || cursedPossession ? (
                       <div className="grid grid-cols-1 gap-2">
                         {/* Regular Evidence */}
-                        {selectedRun.evidence && selectedRun.evidence.length > 0 && (
-                          selectedRun.evidence.map((evidence, index) => (
-                            <div
-                              key={index}
-                              className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium"
-                            >
-                              {evidence}
-                            </div>
-                          ))
-                        )}
-                        
-                        {/* Cursed Possession */}
-                        {cursedPossession && (
-                          <div className="px-3 py-2 bg-purple-600 text-white rounded-md text-sm font-medium flex items-center gap-2">
-                            <span>🔮</span>
-                            <span>{cursedPossession.name}</span>
+                        {foundEvidenceNames.map((evidenceName, index) => (
+                          <div
+                            key={index}
+                            className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium"
+                          >
+                            {evidenceName}
                           </div>
-                        )}
+                        ))}                                                
                       </div>
                     ) : (
                       <p className="text-gray-400">No evidence recorded</p>

@@ -1,4 +1,4 @@
-// components/AddRun/PlayerStatus.jsx
+// components/AddRun/PlayerStatus.jsx - Fixed version
 import React from 'react';
 
 const PlayerStatus = ({
@@ -44,19 +44,26 @@ const PlayerStatus = ({
 
       {/* Compact grid layout */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {todaysPlayers.map((player) => (
-          <button
-            key={player}
-            type="button"
-            onClick={() => handlePlayerStatusToggle(player)}
-            className={`px-3 py-2 rounded text-sm font-medium transition-colors duration-200 text-center ${playerStates[player] === 'alive'
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-red-600 text-white hover:bg-red-700'
+        {todaysPlayers.map((player) => {
+          // Get current status, defaulting to 'alive' if not set
+          const currentStatus = playerStates[player] || 'alive';
+          const isAlive = currentStatus === 'alive';
+          
+          return (
+            <button
+              key={player}
+              type="button"
+              onClick={() => handlePlayerStatusToggle(player)}
+              className={`px-3 py-2 rounded text-sm font-medium transition-colors duration-200 text-center ${
+                isAlive
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-red-600 text-white hover:bg-red-700'
               }`}
-          >
-            {player} {playerStates[player] === 'alive' ? '😄' : '💀'}
-          </button>
-        ))}
+            >
+              {player} {isAlive ? '😄' : '💀'}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

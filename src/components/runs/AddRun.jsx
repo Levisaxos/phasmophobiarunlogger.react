@@ -1,4 +1,4 @@
-// src/components/runs/AddRun.jsx - Updated with auto-start timer and simplified controls
+// components/runs/AddRun.jsx - Updated to support evidence exclusion
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
@@ -37,6 +37,7 @@ const AddRun = () => {
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
+    excludedEvidenceIds, // New state for excluded evidence
     selectedGhost,
     actualGhost,
     excludedGhosts,
@@ -52,6 +53,7 @@ const AddRun = () => {
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,
+    handleEvidenceExclude, // New handler for evidence exclusion
     handleGhostSelect,
     handleActualGhostSelect,
     handleGhostExclude,
@@ -120,6 +122,17 @@ const AddRun = () => {
     setCurrentRunTime(0);
   };
 
+  const handleEndRun = () => {
+    // Keep session data but clear the map to go back to session setup
+    setSessionData(prev => ({
+      ...prev,
+      map: null
+    }));
+    setSessionStartTime(null);
+    setCurrentRunTime(0);
+    resetForm();
+  };
+
   const handleTimerUpdate = (timeInSeconds) => {
     setCurrentRunTime(timeInSeconds);
   };
@@ -127,8 +140,8 @@ const AddRun = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!selectedRoom || !selectedGhost || !sessionData) {
-      warning('Please fill in all required fields');
+    if (!sessionData) {
+      warning('No active session found');
       return;
     }
 
@@ -139,19 +152,11 @@ const AddRun = () => {
         availableCursedPossessions.find(p => p.id === selectedCursedPossession) : null;
 
       // Create normalized run data with session information
-      const baseRunData = createRunData(allPlayers, sessionData.gameMode, selectedCursedPossessionObj);
+      const baseRunData = createRunData(allPlayers, sessionData, sessionData.gameMode, selectedCursedPossessionObj);
       
       // Override with session data
       const runData = {
         ...baseRunData,
-        mapId: sessionData.map.id,
-        roomName: selectedRoom,
-        // Find room ID from selected map
-        roomId: (() => {
-          const room = availableRooms.find(r => r.name === selectedRoom);
-          return room?.id || null;
-        })(),
-        gameModeId: sessionData.gameMode.id,
         players: sessionData.players.map(playerName => {
           const player = allPlayers.find(p => p.name === playerName);
           return {
@@ -165,11 +170,8 @@ const AddRun = () => {
 
       const newRun = await createRun(runData);
       
-      // Reset form but keep session active
-      resetForm();
-      // Reset timer for next run
-      setSessionStartTime(Date.now());
-      setCurrentRunTime(0);
+      // End the current run and go back to session setup
+      handleEndRun();
 
       success(`Run saved successfully! Run #${newRun.runNumber} for ${sessionData.players.length} player${sessionData.players.length > 1 ? 's' : ''} today. Time: ${formatTime(currentRunTime)}`);
 
@@ -193,7 +195,7 @@ const AddRun = () => {
     }
   };
 
-  const canSubmit = selectedRoom && selectedGhost && sessionData;
+  const canSubmit = sessionData;
 
   if (loading) {
     return (
@@ -211,9 +213,9 @@ const AddRun = () => {
     );
   }
 
-  // Show session setup if no session is active
-  if (!sessionData) {
-    return <SessionSetup onStartSession={handleStartSession} />;
+  // Show session setup if no session is active OR no map is selected
+  if (!sessionData || !sessionData.map) {
+    return <SessionSetup onStartSession={handleStartSession} initialData={sessionData} />;
   }
 
   return (
@@ -244,15 +246,14 @@ const AddRun = () => {
           {/* Room Selection - Takes remaining space */}
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Select Room *
+              Select Room
             </label>
             <select
               value={selectedRoom}
               onChange={(e) => handleRoomChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
             >
-              {!selectedRoom && (<option value="">Choose a room...</option>)}
+              <option value="">Choose a room (optional)...</option>
               {availableRooms.map((room) => (
                 <option key={room.id || room.name} value={room.name}>
                   {room.name}
@@ -302,8 +303,11 @@ const AddRun = () => {
           <EvidenceSelector
             evidence={availableEvidence}
             selectedEvidenceIds={selectedEvidenceIds}
+            excludedEvidenceIds={excludedEvidenceIds}
             maxEvidence={maxEvidence}
             onEvidenceToggle={handleEvidenceToggle}
+            onEvidenceExclude={handleEvidenceExclude}
+            ghosts={ghosts}
           />
         </div>
         
@@ -311,6 +315,7 @@ const AddRun = () => {
           ghosts={ghosts}
           evidence={evidence}
           selectedEvidenceIds={selectedEvidenceIds}
+          excludedEvidenceIds={excludedEvidenceIds}
           selectedGhost={selectedGhost}
           actualGhost={actualGhost}
           excludedGhosts={excludedGhosts}
@@ -337,7 +342,7 @@ const AddRun = () => {
 
           {!canSubmit && (
             <p className="mt-2 text-sm text-gray-400 text-center">
-              Please fill in all required fields to save the run
+              No active session found
             </p>
           )}
         </div>

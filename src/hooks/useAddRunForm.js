@@ -1,4 +1,4 @@
-// hooks/useAddRunForm.js - Cleaned up version without legacy support
+// hooks/useAddRunForm.js - Fixed version with floor state
 import { useState, useEffect } from 'react';
 
 export const useAddRunForm = () => {
@@ -8,7 +8,8 @@ export const useAddRunForm = () => {
 
   // Form state
   const [selectedMap, setSelectedMap] = useState(null);
-  const [selectedRoom, setSelectedRoom] = useState('');
+  const [selectedFloor, setSelectedFloor] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedCursedPossession, setSelectedCursedPossession] = useState('');
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState([]);
   const [excludedEvidenceIds, setExcludedEvidenceIds] = useState([]);
@@ -29,10 +30,16 @@ export const useAddRunForm = () => {
     setPlayerStates(newPlayerStates);
   }, [todaysPlayers]);
 
-  // Reset room when map changes
+  // Reset floor and room when map changes
   useEffect(() => {
-    setSelectedRoom('');
+    setSelectedFloor(null);
+    setSelectedRoom(null);
   }, [selectedMap]);
+
+  // Reset room when floor changes
+  useEffect(() => {
+    setSelectedRoom(null);
+  }, [selectedFloor]);
 
   // Event handlers
   const handleTodaysPlayersConfirm = (players) => {
@@ -46,6 +53,10 @@ export const useAddRunForm = () => {
 
   const handleMapChange = (map) => {
     setSelectedMap(map);
+  };
+
+  const handleFloorChange = (floor) => {
+    setSelectedFloor(floor);
   };
 
   const handleRoomChange = (room) => {
@@ -105,7 +116,8 @@ export const useAddRunForm = () => {
 
   const resetForm = () => {
     setSelectedMap(null);
-    setSelectedRoom('');
+    setSelectedFloor(null);
+    setSelectedRoom(null);
     setSelectedCursedPossession('');
     setSelectedEvidenceIds([]);
     setExcludedEvidenceIds([]);
@@ -137,24 +149,16 @@ export const useAddRunForm = () => {
       };
     });
 
-    // Find room ID from session map
-    let roomId = null;
-    if (sessionData?.map && selectedRoom) {
-      const sessionMap = sessionData.map;
-      // Current format: rooms with IDs and names
-      const room = sessionMap.rooms?.find(r => r.name === selectedRoom);
-      roomId = room?.id || null;
-    }
-
     return {
       // Core identifiers (IDs only) - use session data
       mapId: sessionData?.map?.id || null,
-      roomId: roomId,
-      roomName: selectedRoom || null, // Allow null room
+      floorId: selectedFloor?.id || null,
+      roomId: selectedRoom?.id || null,
+      roomName: selectedRoom?.name || null,
       cursedPossessionId: selectedCursedPossession || null,
       evidenceIds: [...selectedEvidenceIds],
-      ghostId: selectedGhost?.id || null, // Allow null ghost
-      actualGhostId: finalActualGhost?.id || null, // Allow null actual ghost
+      ghostId: selectedGhost?.id || null,
+      actualGhostId: finalActualGhost?.id || null,
       gameModeId: sessionData?.gameMode?.id || null,
       
       // Player data with embedded status
@@ -174,6 +178,7 @@ export const useAddRunForm = () => {
     todaysPlayers,
     showPlayersModal,
     selectedMap,
+    selectedFloor,
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
@@ -196,6 +201,7 @@ export const useAddRunForm = () => {
     handleTodaysPlayersConfirm,
     handleChangePlayersClick,
     handleMapChange,
+    handleFloorChange,
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,

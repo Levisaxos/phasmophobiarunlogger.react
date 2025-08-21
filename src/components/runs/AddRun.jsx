@@ -1,4 +1,4 @@
-// components/runs/AddRun.jsx - Cleaned up version without legacy support
+// components/runs/AddRun.jsx - Fixed version with proper floor handling
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
@@ -34,7 +34,7 @@ const AddRun = () => {
   const [currentRunTime, setCurrentRunTime] = useState(0);
 
   const {
-    // State
+    // State - now includes floor state
     selectedFloor,
     selectedRoom,
     selectedCursedPossession,
@@ -51,7 +51,7 @@ const AddRun = () => {
     setSelectedEvidenceIds,
     setIsSaving,
     
-    // Handlers
+    // Handlers - now includes floor handlers
     handleFloorChange,
     handleRoomChange,
     handleCursedPossessionChange,
@@ -80,16 +80,6 @@ const AddRun = () => {
       .filter(p => p.isActive)
       .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
   }, [cursedPossessions]);
-
-  // Get available rooms from the session map
-  const availableRooms = useMemo(() => {
-    if (!sessionData?.map?.rooms) return [];
-    
-    // Current format: rooms with IDs and names
-    return sessionData.map.rooms
-      .filter(room => room.name && room.name.trim())
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [sessionData?.map]);
 
   // Get the maximum evidence allowed by the session game mode
   const maxEvidence = sessionData?.gameMode?.maxEvidence ?? 3;

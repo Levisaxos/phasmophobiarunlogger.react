@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../../hooks/useData';
 import { UI_CONSTANTS } from '../../constants';
 
@@ -13,12 +13,30 @@ const ManageMapsPage = () => {
     floors: [
       {
         id: 1,
-        name: 'Ground Floor',
+        name: 'First Floor',
         order: 0,
         rooms: ['']
       }
     ]
   });
+
+  // Refs for auto-focusing on newly created room inputs
+  const roomInputRefs = useRef({});
+  
+  // State to track when we should focus a new room (to avoid auto-focusing on other changes)
+  const [focusNewRoom, setFocusNewRoom] = useState(null);
+
+  // Effect to focus on a specific new room when needed
+  useEffect(() => {
+    if (focusNewRoom) {
+      const { floorId, roomIndex } = focusNewRoom;
+      const refKey = `${floorId}-${roomIndex}`;
+      if (roomInputRefs.current[refKey]) {
+        roomInputRefs.current[refKey].focus();
+      }
+      setFocusNewRoom(null); // Clear the focus request
+    }
+  }, [focusNewRoom]);
 
   const handleAddNew = () => {
     setEditingMap({
@@ -27,7 +45,7 @@ const ManageMapsPage = () => {
       floors: [
         {
           id: 1,
-          name: 'Ground Floor',
+          name: 'First Floor',
           order: 0,
           rooms: ['']
         }
@@ -53,7 +71,7 @@ const ManageMapsPage = () => {
       floorsForEditing = [
         {
           id: 1,
-          name: 'Ground Floor',
+          name: 'First Floor',
           order: 0,
           rooms: ['']
         }
@@ -104,7 +122,7 @@ const ManageMapsPage = () => {
           floors: [
             {
               id: 1,
-              name: 'Ground Floor',
+              name: 'First Floor',
               order: 0,
               rooms: ['']
             }
@@ -135,7 +153,7 @@ const ManageMapsPage = () => {
       floors: [
         {
           id: 1,
-          name: 'Ground Floor',
+          name: 'First Floor',
           order: 0,
           rooms: ['']
         }
@@ -178,6 +196,9 @@ const ManageMapsPage = () => {
 
   // Room management functions
   const addRoom = (floorId) => {
+    const floor = editingMap.floors.find(f => f.id === floorId);
+    const newRoomIndex = floor ? floor.rooms.length : 0;
+    
     setEditingMap({
       ...editingMap,
       floors: editingMap.floors.map(floor =>
@@ -186,6 +207,9 @@ const ManageMapsPage = () => {
           : floor
       )
     });
+
+    // Request focus for the new room
+    setFocusNewRoom({ floorId, roomIndex: newRoomIndex });
   };
 
   const removeRoom = (floorId, roomIndex) => {
@@ -213,6 +237,32 @@ const ManageMapsPage = () => {
           : floor
       )
     });
+  };
+
+  // Handle Enter key press in room input
+  const handleRoomKeyDown = (e, floorId, roomIndex) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Add a new room after the current one
+      const floor = editingMap.floors.find(f => f.id === floorId);
+      if (floor) {
+        const newRooms = [...floor.rooms];
+        newRooms.splice(roomIndex + 1, 0, ''); // Insert empty room after current
+        
+        setEditingMap({
+          ...editingMap,
+          floors: editingMap.floors.map(f =>
+            f.id === floorId
+              ? { ...f, rooms: newRooms }
+              : f
+          )
+        });
+
+        // Request focus for the new room
+        setFocusNewRoom({ floorId, roomIndex: roomIndex + 1 });
+      }
+    }
   };
 
   // Helper function to get total room count for display from floors
@@ -342,9 +392,19 @@ const ManageMapsPage = () => {
                 {/* Floors */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <label className="block text-sm font-medium text-gray-300">
-                      Floors ({editingMap.floors.length})
-                    </label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Floors ({editingMap.floors.length})
+                      </label>
+                      <div className="text-xs text-gray-400">
+                        {editingMap.floors.map((floor, index) => (
+                          <span key={floor.id}>
+                            {floor.name}: {floor.rooms.filter(room => room.trim()).length} rooms
+                            {index < editingMap.floors.length - 1 && ', '}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                     <button
                       onClick={addFloor}
                       className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -389,9 +449,15 @@ const ManageMapsPage = () => {
                           {floor.rooms.map((room, roomIndex) => (
                             <div key={roomIndex} className="flex gap-2">
                               <input
+                                ref={(el) => {
+                                  if (el) {
+                                    roomInputRefs.current[`${floor.id}-${roomIndex}`] = el;
+                                  }
+                                }}
                                 type="text"
                                 value={room}
                                 onChange={(e) => updateRoom(floor.id, roomIndex, e.target.value)}
+                                onKeyDown={(e) => handleRoomKeyDown(e, floor.id, roomIndex)}
                                 className="flex-1 px-3 py-2 border border-gray-500 bg-gray-700 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder={`Room ${roomIndex + 1}`}
                               />

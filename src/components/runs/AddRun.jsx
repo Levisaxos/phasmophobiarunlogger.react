@@ -1,4 +1,4 @@
-// components/runs/AddRun.jsx - Updated to support evidence exclusion
+// components/runs/AddRun.jsx - Cleaned up version without legacy support
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
@@ -11,6 +11,7 @@ import CursedPossessionSelector from './CursedPossessionSelector';
 import EvidenceSelector from './EvidenceSelector';
 import GhostSelector from './GhostSelector';
 import PlayerStatus from './PlayerStatus';
+import FloorRoomSelector from './FloorRoomSelector';
 
 const AddRun = () => {
   const {
@@ -38,7 +39,7 @@ const AddRun = () => {
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
-    excludedEvidenceIds, // New state for excluded evidence
+    excludedEvidenceIds,
     selectedGhost,
     actualGhost,
     excludedGhosts,
@@ -55,7 +56,7 @@ const AddRun = () => {
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,
-    handleEvidenceExclude, // New handler for evidence exclusion
+    handleEvidenceExclude,
     handleGhostSelect,
     handleActualGhostSelect,
     handleGhostExclude,
@@ -80,48 +81,15 @@ const AddRun = () => {
       .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
   }, [cursedPossessions]);
 
-  // Get available rooms from the session map with floor support
-  const { roomsByFloor, sortedFloors, groundFloor } = useMemo(() => {
-    if (!sessionData?.map) return { roomsByFloor: {}, sortedFloors: [], groundFloor: null };
+  // Get available rooms from the session map
+  const availableRooms = useMemo(() => {
+    if (!sessionData?.map?.rooms) return [];
     
-    const map = sessionData.map;
-    const roomsWithFloors = maps.find(m => m.id === map.id) ? 
-      require('../../services/api/mapsService').mapsService.getAllRoomsFromMap(maps.find(m => m.id === map.id)) : [];
-    
-    // Group rooms by floor and sort by floor order
-    const roomsByFloor = roomsWithFloors.reduce((acc, roomData) => {
-      const floorName = roomData.floorName;
-      if (!acc[floorName]) {
-        acc[floorName] = {
-          order: roomData.floorOrder,
-          rooms: []
-        };
-      }
-      acc[floorName].rooms.push(roomData.name);
-      return acc;
-    }, {});
-
-    // Sort floors by order and rooms alphabetically within each floor
-    const sortedFloors = Object.entries(roomsByFloor)
-      .sort(([, a], [, b]) => a.order - b.order)
-      .map(([floorName, floorData]) => ({
-        name: floorName,
-        order: floorData.order,
-        rooms: floorData.rooms.sort((a, b) => a.localeCompare(b))
-      }));
-    
-    // Find the ground floor (order 0) for auto-selection
-    const groundFloor = sortedFloors.find(floor => floor.order === 0);
-    
-    return { roomsByFloor, sortedFloors, groundFloor };
-  }, [sessionData?.map, maps]);
-
-  // Auto-select ground floor when map changes
-  useEffect(() => {
-    if (groundFloor && !selectedFloor) {
-      handleFloorChange(groundFloor.name);
-    }
-  }, [groundFloor, selectedFloor, handleFloorChange]);
+    // Current format: rooms with IDs and names
+    return sessionData.map.rooms
+      .filter(room => room.name && room.name.trim())
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [sessionData?.map]);
 
   // Get the maximum evidence allowed by the session game mode
   const maxEvidence = sessionData?.gameMode?.maxEvidence ?? 3;
@@ -266,69 +234,17 @@ const AddRun = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Floor and Room Selection Row */}
+        {/* Floor and Room Selection, Perfect Game, and Timer Row */}
         <div className="flex items-end gap-6">
-          {/* Floor Selection */}
+          {/* Floor and Room Selection - Takes remaining space */}
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Select Floor
-            </label>
-            <select
-              value={selectedFloor}
-              onChange={(e) => {
-                handleFloorChange(e.target.value);
-                // Reset room when floor changes
-                handleRoomChange('');
-              }}
-              className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All floors (optional)...</option>
-              {sortedFloors.map((floor) => (
-                <option key={floor.name} value={floor.name}>
-                  {floor.name} ({floor.rooms.length} rooms)
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Room Selection */}
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Select Room
-            </label>
-            <select
-              value={selectedRoom}
-              onChange={(e) => handleRoomChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">
-                {selectedFloor 
-                  ? `Choose a room on ${selectedFloor} (optional)...`
-                  : "Choose a room (optional)..."
-                }
-              </option>
-              {selectedFloor ? (
-                // Show only rooms from selected floor
-                sortedFloors
-                  .find(floor => floor.name === selectedFloor)?.rooms
-                  .map((roomName) => (
-                    <option key={roomName} value={roomName}>
-                      {roomName}
-                    </option>
-                  )) || []
-              ) : (
-                // Show all rooms grouped by floor
-                sortedFloors.map((floor) => (
-                  <optgroup key={floor.name} label={floor.name}>
-                    {floor.rooms.map((roomName) => (
-                      <option key={`${floor.name}-${roomName}`} value={roomName}>
-                        {roomName}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))
-              )}
-            </select>
+            <FloorRoomSelector
+              selectedMap={sessionData.map}
+              selectedFloor={selectedFloor}
+              onFloorChange={handleFloorChange}
+              selectedRoom={selectedRoom}
+              onRoomChange={handleRoomChange}
+            />
           </div>
 
           {/* Perfect Game Toggle - Fixed width */}

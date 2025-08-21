@@ -1,19 +1,30 @@
-// utils/formatUtils.js
+// utils/formatUtils.js - Updated to work with floors structure only
 
 /**
- * Get room name from run data, handling both legacy and new formats
+ * Get room name from run data using floors structure
  * @param {Object} run - Run object
  * @param {Object} map - Map object
  * @returns {string} Room name
  */
 export const getRoomName = (run, map) => {
-  if (run.roomName) {
-    return run.roomName;
-  } else if (run.roomId && map?.rooms) {
-    if (typeof map.rooms[0] === 'object') {
-      // New format: rooms with IDs
-      const room = map.rooms.find(r => r.id === run.roomId);
-      return room?.name || 'Unknown Room';
+  if (run.roomId && run.floorId && map?.floors) {
+    // Search the specific floor first (more efficient)
+    const floor = map.floors.find(f => f.id === run.floorId);
+    if (floor?.rooms && Array.isArray(floor.rooms)) {
+      const room = floor.rooms.find(r => r.id === run.roomId);
+      if (room) {
+        return room.name;
+      }
+    }
+  } else if (run.roomId && map?.floors) {
+    // Fallback: Search through all floors to find the room by ID
+    for (const floor of map.floors) {
+      if (floor.rooms && Array.isArray(floor.rooms)) {
+        const room = floor.rooms.find(r => r.id === run.roomId);
+        if (room) {
+          return room.name;
+        }
+      }
     }
   }
   return 'Unknown Room';
@@ -22,7 +33,7 @@ export const getRoomName = (run, map) => {
 /**
  * Format players with status for display
  * @param {Object} run - Run object
- * @returns {JSX.Element} Formatted players component
+ * @returns {Object} Formatted players data
  */
 export const formatPlayersWithStatus = (run) => {
   // Handle both new and legacy player data formats
@@ -70,30 +81,31 @@ export const getEvidenceNames = (evidenceIds, evidence) => {
 };
 
 /**
- * Get available rooms from map, handling both legacy and new formats
+ * Get available rooms from map using floors structure
  * @param {Object} selectedMap - Map object
  * @returns {Array} Array of room objects with id and name
  */
 export const getAvailableRooms = (selectedMap) => {
-  if (!selectedMap) return [];
-  
-  if (selectedMap.rooms && Array.isArray(selectedMap.rooms) && selectedMap.rooms.length > 0 && typeof selectedMap.rooms[0] === 'object') {
-    // New format: rooms with IDs
-    return selectedMap.rooms
-      .filter(room => room.name && room.name.trim())
-      .sort((a, b) => a.name.localeCompare(b.name));
-  } else if (selectedMap.rooms && Array.isArray(selectedMap.rooms)) {
-    // Legacy format: array of strings
-    return selectedMap.rooms
-      .filter(room => room && room.trim())
-      .sort((a, b) => a.localeCompare(b))
-      .map((roomName, index) => ({ id: index + 1, name: roomName }));
-  } else if (selectedMap.roomsLegacy && Array.isArray(selectedMap.roomsLegacy)) {
-    // Fallback to legacy rooms
-    return selectedMap.roomsLegacy
-      .filter(room => room && room.trim())
-      .sort((a, b) => a.localeCompare(b))
-      .map((roomName, index) => ({ id: index + 1, name: roomName }));
+  if (!selectedMap || !selectedMap.floors || !Array.isArray(selectedMap.floors)) {
+    return [];
   }
-  return [];
+  
+  // Collect all rooms from all floors
+  const allRooms = [];
+  selectedMap.floors.forEach(floor => {
+    if (floor.rooms && Array.isArray(floor.rooms)) {
+      floor.rooms.forEach(room => {
+        if (room.name && room.name.trim()) {
+          allRooms.push({
+            id: room.id,
+            name: room.name,
+            floorId: floor.id,
+            floorName: floor.name
+          });
+        }
+      });
+    }
+  });
+  
+  return allRooms.sort((a, b) => a.name.localeCompare(b.name));
 };

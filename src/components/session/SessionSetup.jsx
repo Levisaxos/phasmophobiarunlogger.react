@@ -1,4 +1,4 @@
-// src/components/session/SessionSetup.jsx - Updated to support initial data
+// src/components/session/SessionSetup.jsx - Cleaned up version without legacy support
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 
@@ -76,7 +76,7 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
         }
       }
     }
-  }, [activeGameModes, initialData]); // Added initialData dependency
+  }, [activeGameModes, initialData]);
 
   // Save preferences when they change (but not when loading initial data)
   useEffect(() => {
@@ -282,9 +282,16 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
                       {mapsOfSize.sort((a, b) => a.id - b.id).map((map) => {
-                        console.log(map);
                         const isSelected = selectedMap?.id === map.id;
-                        const roomCount = map.rooms ? map.rooms.length : 0;
+                        // Count rooms from floors structure
+                        let roomCount = 0;
+                        if (map.floors && Array.isArray(map.floors)) {
+                          map.floors.forEach(floor => {
+                            if (floor.rooms && Array.isArray(floor.rooms)) {
+                              roomCount += floor.rooms.length;
+                            }
+                          });
+                        }
                         const hasNoRooms = roomCount === 0;
                         
                         return (

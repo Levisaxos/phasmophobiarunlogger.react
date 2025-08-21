@@ -1,4 +1,4 @@
-// hooks/useAddRunForm.js - Updated with evidence exclusion support
+// hooks/useAddRunForm.js - Cleaned up version without legacy support
 import { useState, useEffect } from 'react';
 
 export const useAddRunForm = () => {
@@ -8,11 +8,10 @@ export const useAddRunForm = () => {
 
   // Form state
   const [selectedMap, setSelectedMap] = useState(null);
-  const [selectedFloor, setSelectedFloor] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
   const [selectedCursedPossession, setSelectedCursedPossession] = useState('');
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState([]);
-  const [excludedEvidenceIds, setExcludedEvidenceIds] = useState([]); // New state for excluded evidence
+  const [excludedEvidenceIds, setExcludedEvidenceIds] = useState([]);
   const [selectedGhost, setSelectedGhost] = useState(null);
   const [actualGhost, setActualGhost] = useState(null);
   const [excludedGhosts, setExcludedGhosts] = useState([]);
@@ -30,9 +29,8 @@ export const useAddRunForm = () => {
     setPlayerStates(newPlayerStates);
   }, [todaysPlayers]);
 
-  // Reset room and floor when map changes
+  // Reset room when map changes
   useEffect(() => {
-    setSelectedFloor('');
     setSelectedRoom('');
   }, [selectedMap]);
 
@@ -48,10 +46,6 @@ export const useAddRunForm = () => {
 
   const handleMapChange = (map) => {
     setSelectedMap(map);
-  };
-
-  const handleFloorChange = (floor) => {
-    setSelectedFloor(floor);
   };
 
   const handleRoomChange = (room) => {
@@ -70,7 +64,6 @@ export const useAddRunForm = () => {
     }
   };
 
-  // New handler for evidence exclusion
   const handleEvidenceExclude = (evidenceId, isExcluding) => {
     if (isExcluding) {
       setExcludedEvidenceIds(prev => [...prev, evidenceId]);
@@ -112,11 +105,10 @@ export const useAddRunForm = () => {
 
   const resetForm = () => {
     setSelectedMap(null);
-    setSelectedFloor('');
     setSelectedRoom('');
     setSelectedCursedPossession('');
     setSelectedEvidenceIds([]);
-    setExcludedEvidenceIds([]); // Reset excluded evidence
+    setExcludedEvidenceIds([]);
     setSelectedGhost(null);
     setActualGhost(null);
     setExcludedGhosts([]);
@@ -140,7 +132,7 @@ export const useAddRunForm = () => {
       const player = allPlayers.find(p => p.name === playerName);
       return {
         id: player?.id || null,
-        name: playerName, // Keep name for backward compatibility during transition
+        name: playerName,
         status: playerStates[playerName] || 'alive'
       };
     });
@@ -149,16 +141,9 @@ export const useAddRunForm = () => {
     let roomId = null;
     if (sessionData?.map && selectedRoom) {
       const sessionMap = sessionData.map;
-      // Handle both new room format (with IDs) and legacy format (array of strings)
-      if (sessionMap.rooms && Array.isArray(sessionMap.rooms) && typeof sessionMap.rooms[0] === 'object') {
-        // New format: rooms with IDs
-        const room = sessionMap.rooms.find(r => r.name === selectedRoom);
-        roomId = room?.id || null;
-      } else if (sessionMap.rooms && Array.isArray(sessionMap.rooms)) {
-        // Legacy format: find index + 1 as ID
-        const roomIndex = sessionMap.rooms.indexOf(selectedRoom);
-        roomId = roomIndex >= 0 ? roomIndex + 1 : null;
-      }
+      // Current format: rooms with IDs and names
+      const room = sessionMap.rooms?.find(r => r.name === selectedRoom);
+      roomId = room?.id || null;
     }
 
     return {
@@ -189,11 +174,10 @@ export const useAddRunForm = () => {
     todaysPlayers,
     showPlayersModal,
     selectedMap,
-    selectedFloor,
     selectedRoom,
     selectedCursedPossession,
     selectedEvidenceIds,
-    excludedEvidenceIds, // Expose excluded evidence state
+    excludedEvidenceIds,
     selectedGhost,
     actualGhost,
     excludedGhosts,
@@ -212,11 +196,10 @@ export const useAddRunForm = () => {
     handleTodaysPlayersConfirm,
     handleChangePlayersClick,
     handleMapChange,
-    handleFloorChange,
     handleRoomChange,
     handleCursedPossessionChange,
     handleEvidenceToggle,
-    handleEvidenceExclude, // New handler for evidence exclusion
+    handleEvidenceExclude,
     handleGhostSelect,
     handleActualGhostSelect,
     handleGhostExclude,

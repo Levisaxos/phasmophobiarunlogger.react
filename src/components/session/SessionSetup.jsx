@@ -226,7 +226,6 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
           {/* Session Summary */}
           <div>
             <h3 className="text-lg font-semibold text-gray-100 mb-3">Session Summary</h3>
-            {canStartSession ? (
               <div className="bg-gray-800 border border-gray-600 rounded-md p-3 text-sm">
                 <div className="space-y-1">
                   <div>
@@ -237,17 +236,14 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
                     <span className="text-gray-400">Difficulty:</span>
                     <span className="text-gray-200 font-medium ml-2">{selectedGameModeObj?.name}</span>
                   </div>
+                
                   <div>
                     <span className="text-gray-400">Map:</span>
-                    <span className="text-gray-200 font-medium ml-2">{selectedMap?.name} ({selectedMap?.size})</span>
+                      ({selectedMap && ( <span className="text-gray-200 font-medium ml-2">{selectedMap?.name} ({selectedMap?.size})</span>)})
                   </div>
+                
                 </div>
               </div>
-            ) : (
-              <div className="bg-gray-800 border border-gray-600 rounded-md p-3 text-sm text-gray-400">
-                Complete setup to see summary
-              </div>
-            )}
           </div>
         </div>
 
@@ -285,7 +281,8 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
                       {size} ({mapsOfSize.length})
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-                      {mapsOfSize.map((map) => {
+                      {mapsOfSize.sort((a, b) => a.id - b.id).map((map) => {
+                        console.log(map);
                         const isSelected = selectedMap?.id === map.id;
                         const roomCount = map.rooms ? map.rooms.length : 0;
                         const hasNoRooms = roomCount === 0;

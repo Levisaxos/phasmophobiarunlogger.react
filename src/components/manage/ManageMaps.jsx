@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
+import {UI_CONSTANTS} from '../../constants';
 
 const ManageMapsPage = () => {
   const { maps, loading, error, createMap, updateMap, deleteMap, toggleMapArchived } = useData();
@@ -103,7 +104,7 @@ const ManageMapsPage = () => {
   };
 
   const addRoom = () => {
-    if (editingMap.rooms.length < 69) {
+    if (editingMap.rooms.length < UI_CONSTANTS.MAX_ROOMS_PER_MAP) {
       setEditingMap({ 
         ...editingMap, 
         rooms: [...editingMap.rooms, ''] 
@@ -244,11 +245,11 @@ const ManageMapsPage = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-300">
-                      Rooms ({editingMap.rooms.length}/69)
+                      Rooms ({editingMap.rooms.length}/ {UI_CONSTANTS.MAX_ROOMS_PER_MAP})
                     </label>
                     <button
                       onClick={addRoom}
-                      disabled={editingMap.rooms.length >= 69}
+                      disabled={editingMap.rooms.length >= UI_CONSTANTS.MAX_ROOMS_PER_MAP}
                       className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
                     >
                       Add Room

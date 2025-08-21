@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
+import { UI_CONSTANTS } from '../../constants';
 
 const ManagePlayers = () => {
   const { players, loading, error, createPlayer, updatePlayer, deletePlayer, togglePlayerActive } = useData();
@@ -152,9 +153,7 @@ const ManagePlayers = () => {
                         <div className="font-medium flex items-center gap-2">
                           {player.name}
                           {player.isDefault && (
-                            <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
-                              DEFAULT
-                            </span>
+                            <span className="text-blue-400 text-xs">✔️</span>
                           )}
                         </div>
                         <div className="text-xs text-gray-400">
@@ -162,14 +161,13 @@ const ManagePlayers = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        {player.isDefault && (
-                          <span className="text-blue-400 text-xs">🏠</span>
-                        )}
+                        
                         <span className={`text-xs ${player.isActive ? 'text-green-400' : 'text-red-400'}`}>
                           {player.isActive ? '✓' : '✗'}
                         </span>
                       </div>
                     </div>
+
                   </button>                                  
                 </div>
               ))}
@@ -212,13 +210,13 @@ const ManagePlayers = () => {
                     type="button"
                     onClick={() => {
                       const currentDefaultCount = players.filter(p => p.isDefault && p.id !== selectedPlayer?.id).length;
-                      if (!editingPlayer.isDefault && currentDefaultCount >= 4) {
+                      if (!editingPlayer.isDefault && currentDefaultCount >= UI_CONSTANTS.MAX_DEFAULT_PLAYERS) {
                         alert('Maximum of 4 players can be set as default.');
                         return;
                       }
                       setEditingPlayer({ ...editingPlayer, isDefault: !editingPlayer.isDefault });
                     }}
-                    disabled={!editingPlayer.isDefault && players.filter(p => p.isDefault && p.id !== selectedPlayer?.id).length >= 4}
+                    disabled={!editingPlayer.isDefault && players.filter(p => p.isDefault && p.id !== selectedPlayer?.id).length >= UI_CONSTANTS.MAX_DEFAULT_PLAYERS}
                     className={`px-6 py-3 rounded-md font-medium transition-colors duration-200 flex items-center gap-2 ${
                       editingPlayer.isDefault
                         ? 'bg-blue-600 text-white'
@@ -229,10 +227,10 @@ const ManagePlayers = () => {
                     {editingPlayer.isDefault ? 'Default Player' : 'Regular Player'}
                   </button>
                   <p className="mt-1 text-xs text-gray-400">
-                    Default players will be automatically selected when starting a new gaming session. Maximum 4 players can be set as default.
+                    Default players will be automatically selected when starting a new gaming session. Maximum {UI_CONSTANTS.MAX_DEFAULT_PLAYERS} players can be set as default.
                     {players.filter(p => p.isDefault).length > 0 && (
                       <span className="block mt-1">
-                        Current default players: {players.filter(p => p.isDefault).length}/4
+                        Current default players: {players.filter(p => p.isDefault).length}/{UI_CONSTANTS.MAX_DEFAULT_PLAYERS}
                       </span>
                     )}
                   </p>
@@ -297,7 +295,7 @@ const ManagePlayers = () => {
                 {/* Show current defaults count */}
                 {players.filter(p => p.isDefault).length > 0 && (
                   <div className="bg-gray-800 border border-gray-600 rounded-md p-4">
-                    <h4 className="text-sm font-medium text-gray-300 mb-2">Current Default Players ({players.filter(p => p.isDefault).length}/4):</h4>
+                    <h4 className="text-sm font-medium text-gray-300 mb-2">Current Default Players ({players.filter(p => p.isDefault).length}/{UI_CONSTANTS.MAX_DEFAULT_PLAYERS}):</h4>
                     <div className="flex flex-wrap gap-2">
                       {players.filter(p => p.isDefault).map((defaultPlayer) => (
                         <span key={defaultPlayer.id} className="px-2 py-1 bg-blue-600 text-white text-xs rounded-md flex items-center gap-1">

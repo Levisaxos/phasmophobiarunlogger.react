@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
+import { UI_CONSTANTS } from '../../constants';
 
 const ManageGhostsPage = () => {
   const { ghosts, evidence, loading, error, createGhost, updateGhost, deleteGhost } = useData();
@@ -38,15 +39,9 @@ const ManageGhostsPage = () => {
 
   const handleSaveGhost = async () => {
     try {
-      // Also save legacy evidence field for backward compatibility
-      const evidenceNames = editingGhost.evidenceIds.map(id => {
-        const evidenceItem = evidence.find(e => e.id === id);
-        return evidenceItem ? evidenceItem.name : '';
-      }).filter(name => name);
-
       const ghostData = {
-        ...editingGhost,
-        evidence: evidenceNames // Legacy field
+        ...editingGhost
+        // Only save evidenceIds, no legacy evidence names
       };
 
       if (selectedGhost) {
@@ -100,7 +95,7 @@ const ManageGhostsPage = () => {
         ...editingGhost,
         evidenceIds: currentEvidenceIds.filter(id => id !== evidenceId)
       });
-    } else if (currentEvidenceIds.length < 3) {
+    } else if (currentEvidenceIds.length < UI_CONSTANTS.MAX_EVIDENCE_TYPES) {
       // Add evidence (max 3)
       setEditingGhost({
         ...editingGhost,
@@ -204,16 +199,16 @@ const ManageGhostsPage = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-300">
-                      Evidence ({(editingGhost.evidenceIds || []).length}/3)
+                      Evidence ({(editingGhost.evidenceIds || []).length}/{UI_CONSTANTS.MAX_EVIDENCE_TYPES})
                     </label>
                     <span className="text-xs text-gray-400">
-                      Select up to 3 evidence types
+                      Select up to {UI_CONSTANTS.MAX_EVIDENCE_TYPES} evidence types
                     </span>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
                     {availableEvidence.map((evidenceItem) => {
                       const isSelected = (editingGhost.evidenceIds || []).includes(evidenceItem.id);
-                      const canSelect = (editingGhost.evidenceIds || []).length < 3;
+                      const canSelect = (editingGhost.evidenceIds || []).length < UI_CONSTANTS.MAX_EVIDENCE_TYPES;
                       
                       return (
                         <button

@@ -3,7 +3,7 @@
 export const UI_CONSTANTS = {
     MAX_DEFAULT_PLAYERS: 4,
     MAX_EVIDENCE_TYPES: 3,
-    MAX_ROOMS_PER_MAP: 69,
+    MAX_ROOMS_PER_MAP: 100,    
     SIDEBAR_WIDTH: 'w-80',
     MAIN_HEIGHT: 'calc(100vh - 140px)'
 };

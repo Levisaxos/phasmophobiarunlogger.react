@@ -9,6 +9,7 @@ export const useData = () => {
   const [gameModes, setGameModes] = useState([]);
   const [evidence, setEvidence] = useState([]);
   const [cursedPossessions, setCursedPossessions] = useState([]);
+  const [mapCollections, setMapCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,14 +18,15 @@ export const useData = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [mapsData, ghostsData, runsData, playersData, gameModesData, evidenceData, cursedPossessionsData] = await Promise.all([
+        const [mapsData, ghostsData, runsData, playersData, gameModesData, evidenceData, cursedPossessionsData, mapCollectionsData] = await Promise.all([
           dataService.getMaps(),
           dataService.getGhosts(),
           dataService.getRuns(),
           dataService.getPlayers(),
           dataService.getGameModes(),
           dataService.getEvidence(),
-          dataService.getCursedPossessions()
+          dataService.getCursedPossessions(),
+          dataService.getMapCollections()
         ]);
         setMaps(mapsData);
         setGhosts(ghostsData);
@@ -33,6 +35,7 @@ export const useData = () => {
         setGameModes(gameModesData);
         setEvidence(evidenceData);
         setCursedPossessions(cursedPossessionsData);
+        setMapCollections(mapCollectionsData);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -330,6 +333,54 @@ export const useData = () => {
     }
   };
 
+  // Map Collections operations
+  const createMapCollection = async (collectionData) => {
+    try {
+      const newCollection = await dataService.createMapCollection(collectionData);
+      setMapCollections(prevCollections => [...prevCollections, newCollection]);
+      return newCollection;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const updateMapCollection = async (id, collectionData) => {
+    try {
+      const updatedCollection = await dataService.updateMapCollection(id, collectionData);
+      setMapCollections(prevCollections => prevCollections.map(collection => 
+        collection.id === id ? updatedCollection : collection
+      ));
+      return updatedCollection;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const deleteMapCollection = async (id) => {
+    try {
+      await dataService.deleteMapCollection(id);
+      setMapCollections(prevCollections => prevCollections.filter(collection => collection.id !== id));
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const toggleMapCollectionActive = async (id) => {
+    try {
+      const updatedCollection = await dataService.toggleMapCollectionActive(id);
+      setMapCollections(prevCollections => prevCollections.map(collection => 
+        collection.id === id ? updatedCollection : collection
+      ));
+      return updatedCollection;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   // Runs operations
   const createRun = async (runData) => {
     try {
@@ -388,6 +439,7 @@ export const useData = () => {
     gameModes,
     evidence,
     cursedPossessions,
+    mapCollections,
     loading,
     error,
     
@@ -425,6 +477,12 @@ export const useData = () => {
     updateCursedPossession,
     deleteCursedPossession,
     toggleCursedPossessionActive,
+
+    // Map Collections operations
+    createMapCollection,
+    updateMapCollection,
+    deleteMapCollection,
+    toggleMapCollectionActive,
 
     // Runs operations
     createRun,

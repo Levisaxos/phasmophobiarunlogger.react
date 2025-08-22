@@ -1,10 +1,10 @@
 // services/baseService.js
-// Base service for common localStorage operations - NO DEFAULT DATA
+// Base service for common localStorage operations - Updated with map collections
 
 const STORAGE_KEY = 'phasmophobia-data';
 let dataCache = null;
 
-// Completely empty data structure - everything must be configured by the user
+// Empty data structure - everything must be configured by the user
 const emptyData = {
   maps: [],
   ghosts: [],
@@ -12,7 +12,8 @@ const emptyData = {
   players: [],
   gameModes: [],
   evidence: [],
-  cursedPossessions: []
+  cursedPossessions: [],
+  mapCollections: [] // New: map collections for grouped maps
 };
 
 // Simulate async operations
@@ -38,6 +39,7 @@ export const baseService = {
         if (!data.cursedPossessions) data.cursedPossessions = [];
         if (!data.maps) data.maps = [];
         if (!data.ghosts) data.ghosts = [];
+        if (!data.mapCollections) data.mapCollections = []; // Add map collections
         
         // Migrate existing data if needed
         await this.migrateData(data);
@@ -147,6 +149,7 @@ export const baseService = {
             if (!data.cursedPossessions) data.cursedPossessions = [];
             if (!data.maps) data.maps = [];
             if (!data.ghosts) data.ghosts = [];
+            if (!data.mapCollections) data.mapCollections = []; // Ensure map collections exist
             
             await this.saveData(data);
             resolve(data);

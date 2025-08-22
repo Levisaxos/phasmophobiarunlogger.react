@@ -1,23 +1,59 @@
-// src/components/session/SessionSetup.jsx - Cleaned up version without legacy support
+// src/components/session/SessionSetup.jsx - Updated with map collections support
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
+import { dataService } from '../../services/dataService';
 
 const SessionSetup = ({ onStartSession, initialData = null }) => {
-  const { maps, players: allPlayers, gameModes, loading, error } = useData();
+  const { maps, players: allPlayers, gameModes, mapCollections, loading, error } = useData();
   
   // Session setup state
   const [selectedPlayers, setSelectedPlayers] = useState([]);
   const [selectedGameMode, setSelectedGameMode] = useState(null);
   const [selectedMap, setSelectedMap] = useState(null);
+  const [selectedMapCollection, setSelectedMapCollection] = useState(null);
 
-  // Get active data with proper sorting
-  const activeMaps = useMemo(() => {
-    const filtered = maps.filter(map => !map.isArchived);
+  // Get individual maps (not part of any collection) and active collections, then combine them
+  const { allMapEntries } = useMemo(() => {
+    // Get map IDs that are part of collections
+    const collectionMapIds = new Set();
+    mapCollections.forEach(collection => {
+      if (collection.isActive !== false) {
+        collection.mapIds.forEach(mapId => collectionMapIds.add(mapId));
+      }
+    });
     
-    // Sort by size: small, medium, large, then by name within each size
+    // Filter individual maps that are not archived and not part of collections
+    const individualMaps = maps.filter(map => 
+      !map.isArchived && !collectionMapIds.has(map.id)
+    ).map(map => ({
+      ...map,
+      type: 'map',
+      sortOrder: map.id
+    }));
+    
+    // Get active collections and mark them as collections
+    // Use the first map ID as the sort order
+    const activeCollections = mapCollections.filter(collection => 
+      collection.isActive !== false
+    ).map(collection => ({
+      ...collection,
+      type: 'collection',
+      sortOrder: collection.mapIds.length > 0 ? collection.mapIds[0] : 999999
+    }));
+    
+    // Combine all entries
+    const allEntries = [...individualMaps, ...activeCollections];
+    
+    return {
+      allMapEntries: allEntries
+    };
+  }, [maps, mapCollections]);
+
+  // Sort all map entries by size and sortOrder (which is the map ID or first map ID for collections)
+  const sortedMapEntries = useMemo(() => {
     const sizeOrder = { 'small': 1, 'medium': 2, 'large': 3 };
     
-    return filtered.sort((a, b) => {
+    return allMapEntries.sort((a, b) => {
       const sizeA = sizeOrder[a.size] || 999;
       const sizeB = sizeOrder[b.size] || 999;
       
@@ -25,11 +61,11 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
         return sizeA - sizeB;
       }
       
-      // If same size, sort alphabetically by name
-      return a.name.localeCompare(b.name);
+      // Within same size, sort by sortOrder (map ID or first map ID for collections)
+      return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
-  }, [maps]);
-  
+  }, [allMapEntries]);
+
   const activeGameModes = useMemo(() => gameModes.filter(gm => gm.isActive), [gameModes]);
   const activePlayers = useMemo(() => allPlayers.filter(p => p.isActive), [allPlayers]);
 
@@ -43,7 +79,15 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
       if (initialData.gameMode && activeGameModes.find(gm => gm.id === initialData.gameMode.id)) {
         setSelectedGameMode(initialData.gameMode.id);
       }
-      // Map is intentionally not restored - user needs to select a new map
+      
+      // Handle map collections in initial data
+      if (initialData.mapCollection) {
+        setSelectedMapCollection(initialData.mapCollection);
+        setSelectedMap(null);
+      } else if (initialData.map) {
+        setSelectedMap(initialData.map);
+        setSelectedMapCollection(null);
+      }
     } else {
       // Load saved preferences
       const savedPreferences = localStorage.getItem('phasmophobia-session-preferences');
@@ -103,22 +147,47 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
     });
   };
 
+  const handleMapEntrySelect = (entry) => {
+    if (entry.type === 'map') {
+      setSelectedMap(entry);
+      setSelectedMapCollection(null);
+    } else if (entry.type === 'collection') {
+      setSelectedMapCollection(entry);
+      setSelectedMap(null);
+    }
+  };
+
   const handleStartSession = () => {
-    if (!selectedMap || !selectedGameMode || selectedPlayers.length === 0) {
+    if ((!selectedMap && !selectedMapCollection) || !selectedGameMode || selectedPlayers.length === 0) {
       return;
     }
 
     const sessionData = {
       players: selectedPlayers,
       gameMode: activeGameModes.find(gm => gm.id === selectedGameMode),
-      map: selectedMap
+      map: selectedMap,
+      mapCollection: selectedMapCollection
     };
 
+    console.log('Starting session with data:', sessionData); // Debug log
     onStartSession(sessionData);
   };
 
-  const canStartSession = selectedMap && selectedGameMode && selectedPlayers.length > 0;
+  const canStartSession = (selectedMap || selectedMapCollection) && selectedGameMode && selectedPlayers.length > 0;
   const selectedGameModeObj = selectedGameMode ? activeGameModes.find(gm => gm.id === selectedGameMode) : null;
+
+  // Helper function to get room count from map
+  const getRoomCount = (map) => {
+    let roomCount = 0;
+    if (map.floors && Array.isArray(map.floors)) {
+      map.floors.forEach(floor => {
+        if (floor.rooms && Array.isArray(floor.rooms)) {
+          roomCount += floor.rooms.length;
+        }
+      });
+    }
+    return roomCount;
+  };
 
   if (loading) {
     return (
@@ -144,7 +213,10 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
           <h3 className="text-lg font-semibold text-blue-400 mb-2">🎯 Continue Session</h3>
           <p className="text-blue-300 text-sm">
             Run completed! Your players and game mode have been preserved. 
-            Select a new map to start your next run.
+            {selectedMapCollection 
+              ? 'Select a new map to start your next run.'
+              : 'Select a new map to start your next run.'
+            }
           </p>
         </div>
       )}
@@ -196,9 +268,9 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
           )}
         </div>
 
-        {/* Game Mode and Map in a row */}
+        {/* Difficulty and Session Summary in a row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Game Mode Section */}
+          {/* Difficulty Section */}
           <div>
             <h3 className="text-lg font-semibold text-gray-100 mb-3">Difficulty</h3>
             {activeGameModes.length === 0 ? (
@@ -208,42 +280,66 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
                 </p>
               </div>
             ) : (
-              <select
-                value={selectedGameMode || ''}
-                onChange={(e) => setSelectedGameMode(e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {!selectedGameMode && (<option value="">Select difficulty...</option>)}
-                {activeGameModes.map((gameMode) => (
-                  <option key={gameMode.id} value={gameMode.id}>
-                    {gameMode.name} (Max {gameMode.maxEvidence || 0} evidence)
-                  </option>
-                ))}
-              </select>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {activeGameModes.map((gameMode) => {
+                  const isSelected = selectedGameMode === gameMode.id;
+                  const evidenceText = gameMode.maxEvidence === 0 
+                    ? 'No evidence' 
+                    : `${gameMode.maxEvidence} evidence`;
+                  
+                  return (
+                    <button
+                      key={gameMode.id}
+                      onClick={() => setSelectedGameMode(gameMode.id)}
+                      className={`p-3 text-left border-2 rounded-md transition-colors duration-200 text-sm ${
+                        isSelected
+                          ? 'bg-orange-600 border-orange-500 text-white'
+                          : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      <div className="font-medium truncate">
+                        {gameMode.name}
+                      </div>
+                      <div className="text-xs opacity-75">
+                        {evidenceText}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
 
           {/* Session Summary */}
           <div>
             <h3 className="text-lg font-semibold text-gray-100 mb-3">Session Summary</h3>
-              <div className="bg-gray-800 border border-gray-600 rounded-md p-3 text-sm">
-                <div className="space-y-1">
-                  <div>
-                    <span className="text-gray-400">Players:</span>
-                    <span className="text-gray-200 font-medium ml-2">{selectedPlayers.join(', ')}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Difficulty:</span>
-                    <span className="text-gray-200 font-medium ml-2">{selectedGameModeObj?.name}</span>
-                  </div>
-                
-                  <div>
-                    <span className="text-gray-400">Map:</span>
-                      ({selectedMap && ( <span className="text-gray-200 font-medium ml-2">{selectedMap?.name} ({selectedMap?.size})</span>)})
-                  </div>
-                
+            <div className="bg-gray-800 border border-gray-600 rounded-md p-3 text-sm">
+              <div className="space-y-1">
+                <div>
+                  <span className="text-gray-400">Players:</span>
+                  <span className="text-gray-200 font-medium ml-2">
+                    {selectedPlayers.length > 0 ? selectedPlayers.join(', ') : 'None selected'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Difficulty:</span>
+                  <span className="text-gray-200 font-medium ml-2">
+                    {selectedGameModeObj?.name || 'None selected'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Map:</span>
+                  <span className="text-gray-200 font-medium ml-2">
+                    {selectedMap 
+                      ? `${selectedMap.name} (${selectedMap.size})`
+                      : selectedMapCollection
+                      ? `${selectedMapCollection.name} (${selectedMapCollection.selectionLabel})`
+                      : 'None selected'
+                    }
+                  </span>
                 </div>
               </div>
+            </div>
           </div>
         </div>
 
@@ -257,7 +353,8 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
               </span>
             )}
           </h3>
-          {activeMaps.length === 0 ? (
+          
+          {sortedMapEntries.length === 0 ? (
             <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-md p-3">
               <p className="text-yellow-400 text-sm">
                 No maps configured. Please go to Manage → Maps to add maps first.
@@ -265,11 +362,11 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Group maps by size */}
+              {/* Group all map entries by size */}
               {['small', 'medium', 'large'].map(size => {
-                const mapsOfSize = activeMaps.filter(map => map.size === size);
+                const entriesOfSize = sortedMapEntries.filter(entry => entry.size === size);
                 
-                if (mapsOfSize.length === 0) return null;
+                if (entriesOfSize.length === 0) return null;
                 
                 return (
                   <div key={size}>
@@ -278,40 +375,54 @@ const SessionSetup = ({ onStartSession, initialData = null }) => {
                         size === 'small' ? 'bg-green-500' : 
                         size === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
                       }`}></span>
-                      {size} ({mapsOfSize.length})
+                      {size} ({entriesOfSize.length})
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-                      {mapsOfSize.sort((a, b) => a.id - b.id).map((map) => {
-                        const isSelected = selectedMap?.id === map.id;
-                        // Count rooms from floors structure
+                      {entriesOfSize.map((entry) => {
+                        const isSelected = entry.type === 'map' 
+                          ? selectedMap?.id === entry.id
+                          : selectedMapCollection?.id === entry.id;
+                        
                         let roomCount = 0;
-                        if (map.floors && Array.isArray(map.floors)) {
-                          map.floors.forEach(floor => {
-                            if (floor.rooms && Array.isArray(floor.rooms)) {
-                              roomCount += floor.rooms.length;
-                            }
-                          });
+                        let hasNoRooms = false;
+                        let subtitle = '';
+                        let buttonColor = '';
+                        
+                        if (entry.type === 'map') {
+                          // Regular map
+                          roomCount = getRoomCount(entry);
+                          hasNoRooms = roomCount === 0;
+                          subtitle = hasNoRooms ? 'No rooms configured' : `${roomCount} rooms`;
+                          buttonColor = isSelected 
+                            ? 'bg-green-600 border-green-500 text-white'
+                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-600';
+                        } else {
+                          // Map collection
+                          subtitle = `${entry.mapIds.length} ${entry.selectionLabel.toLowerCase()}s`;
+                          buttonColor = isSelected
+                            ? 'bg-green-600 border-green-500 text-white'
+                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-600';
                         }
-                        const hasNoRooms = roomCount === 0;
                         
                         return (
                           <button
-                            key={map.id}
-                            onClick={() => !hasNoRooms && setSelectedMap(map)}
+                            key={`${entry.type}-${entry.id}`}
+                            onClick={() => !hasNoRooms && handleMapEntrySelect(entry)}
                             disabled={hasNoRooms}
                             className={`p-3 text-left border-2 rounded-md transition-colors duration-200 text-sm ${
                               hasNoRooms
                                 ? 'bg-gray-900 border-gray-700 text-gray-500 cursor-not-allowed opacity-50'
-                                : isSelected
-                                ? 'bg-green-600 border-green-500 text-white'
-                                : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-600'
+                                : buttonColor
                             }`}
                           >
                             <div className={`font-medium truncate ${hasNoRooms ? 'line-through' : ''}`}>
-                              {map.name}
+                              {entry.name}
+                              {entry.type === 'collection' && (
+                                <span className="ml-1 text-xs opacity-75">📁</span>
+                              )}
                             </div>
                             <div className="text-xs opacity-75">
-                              {hasNoRooms ? 'No rooms configured' : `${roomCount} rooms`}
+                              {subtitle}
                             </div>
                           </button>
                         );

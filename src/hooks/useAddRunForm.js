@@ -1,4 +1,4 @@
-// hooks/useAddRunForm.js - Fixed version with floor state
+// hooks/useAddRunForm.js - Updated with improved auto-selection handling
 import { useState, useEffect } from 'react';
 
 export const useAddRunForm = () => {
@@ -36,10 +36,13 @@ export const useAddRunForm = () => {
     setSelectedRoom(null);
   }, [selectedMap]);
 
-  // Reset room when floor changes
+  // Reset room when floor changes (but allow auto-selection to work)
   useEffect(() => {
-    setSelectedRoom(null);
-  }, [selectedFloor]);
+    // Only reset if we're changing to a different floor, not on initial auto-selection
+    if (selectedFloor) {
+      setSelectedRoom(null);
+    }
+  }, [selectedFloor?.id]); // Use selectedFloor?.id to avoid resetting on auto-selection
 
   // Event handlers
   const handleTodaysPlayersConfirm = (players) => {

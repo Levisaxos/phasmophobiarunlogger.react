@@ -9,6 +9,7 @@ import { gameModesService } from './api/gameModesService';
 import { runsService } from './api/runsService';
 import { evidenceService } from './api/evidenceService';
 import { cursedPossessionsService } from './api/cursedPossessionsService';
+import { mapCollectionsService } from './api/mapCollectionsService';
 
 export const dataService = {
   // Base operations
@@ -68,6 +69,19 @@ export const dataService = {
   deleteCursedPossession: cursedPossessionsService.deleteCursedPossession.bind(cursedPossessionsService),
   toggleCursedPossessionActive: cursedPossessionsService.toggleCursedPossessionActive.bind(cursedPossessionsService),
 
+  // Map collections operations
+  getMapCollections: mapCollectionsService.getMapCollections.bind(mapCollectionsService),
+  getMapCollectionById: mapCollectionsService.getMapCollectionById.bind(mapCollectionsService),
+  getActiveMapCollections: mapCollectionsService.getActiveMapCollections.bind(mapCollectionsService),
+  createMapCollection: mapCollectionsService.createMapCollection.bind(mapCollectionsService),
+  updateMapCollection: mapCollectionsService.updateMapCollection.bind(mapCollectionsService),
+  deleteMapCollection: mapCollectionsService.deleteMapCollection.bind(mapCollectionsService),
+  toggleMapCollectionActive: mapCollectionsService.toggleMapCollectionActive.bind(mapCollectionsService),
+  getMapsInCollection: mapCollectionsService.getMapsInCollection.bind(mapCollectionsService),
+  getIndividualMaps: mapCollectionsService.getIndividualMaps.bind(mapCollectionsService),
+  isMapInCollection: mapCollectionsService.isMapInCollection.bind(mapCollectionsService),
+  getCollectionForMap: mapCollectionsService.getCollectionForMap.bind(mapCollectionsService),
+
   // Runs operations
   getRuns: runsService.getRuns.bind(runsService),
   getRunById: runsService.getRunById.bind(runsService),
@@ -88,7 +102,8 @@ export const dataService = {
       players: [...data.players],
       gameModes: [...data.gameModes],
       evidence: [...data.evidence],
-      cursedPossessions: [...data.cursedPossessions]
+      cursedPossessions: [...data.cursedPossessions],
+      mapCollections: [...data.mapCollections]
     };
   },
 

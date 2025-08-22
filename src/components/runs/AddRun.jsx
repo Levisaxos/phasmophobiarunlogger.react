@@ -1,4 +1,4 @@
-// components/runs/AddRun.jsx - Fixed version with proper floor handling
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
@@ -12,6 +12,7 @@ import EvidenceSelector from './EvidenceSelector';
 import GhostSelector from './GhostSelector';
 import PlayerStatus from './PlayerStatus';
 import FloorRoomSelector from './FloorRoomSelector';
+import CollectionMapSelector from './CollectionMapSelector';
 
 const AddRun = () => {
   const {
@@ -32,6 +33,7 @@ const AddRun = () => {
   const [sessionData, setSessionData] = useState(null);
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const [currentRunTime, setCurrentRunTime] = useState(0);
+  const [selectedCollectionMap, setSelectedCollectionMap] = useState(null);
 
   const {
     // State - now includes floor state
@@ -95,6 +97,7 @@ const AddRun = () => {
     setSessionData(newSessionData);
     setSessionStartTime(Date.now());
     setCurrentRunTime(0);
+    setSelectedCollectionMap(null);
     // Reset form when starting new session
     resetForm();
   };
@@ -103,6 +106,7 @@ const AddRun = () => {
     setSessionData(null);
     setSessionStartTime(null);
     setCurrentRunTime(0);
+    setSelectedCollectionMap(null);
   };
 
   const handleEndRun = () => {
@@ -113,6 +117,7 @@ const AddRun = () => {
     }));
     setSessionStartTime(null);
     setCurrentRunTime(0);
+    setSelectedCollectionMap(null);
     resetForm();
   };
 
@@ -128,14 +133,30 @@ const AddRun = () => {
       return;
     }
 
+    // For map collections, we need a selected map
+    const actualMap = sessionData.mapCollection ? selectedCollectionMap : sessionData.map;
+    if (!actualMap) {
+      warning(sessionData.mapCollection 
+        ? `Please select a ${sessionData.mapCollection.selectionLabel.toLowerCase()} first`
+        : 'No map selected for this session'
+      );
+      return;
+    }
+
     setIsSaving(true);
 
     try {
       const selectedCursedPossessionObj = selectedCursedPossession ?
         availableCursedPossessions.find(p => p.id === selectedCursedPossession) : null;
 
+      // Create session data with the actual selected map
+      const sessionDataWithActualMap = {
+        ...sessionData,
+        map: actualMap
+      };
+
       // Create normalized run data with session information
-      const baseRunData = createRunData(allPlayers, sessionData, sessionData.gameMode, selectedCursedPossessionObj);
+      const baseRunData = createRunData(allPlayers, sessionDataWithActualMap, sessionData.gameMode, selectedCursedPossessionObj);
       
       // Override with session data
       const runData = {
@@ -178,7 +199,7 @@ const AddRun = () => {
     }
   };
 
-  const canSubmit = sessionData;
+  const canSubmit = sessionData && (sessionData.map || (sessionData.mapCollection && selectedCollectionMap));
 
   if (loading) {
     return (
@@ -196,8 +217,8 @@ const AddRun = () => {
     );
   }
 
-  // Show session setup if no session is active OR no map is selected
-  if (!sessionData || !sessionData.map) {
+  // Show session setup if no session is active OR no map/collection map is selected
+  if (!sessionData || (!sessionData.map && !sessionData.mapCollection)) {
     return <SessionSetup onStartSession={handleStartSession} initialData={sessionData} />;
   }
 
@@ -208,7 +229,10 @@ const AddRun = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-100 mb-2">
-              🎮 {sessionData.map.name} - {sessionData.gameMode.name}
+              🎮 {sessionData.mapCollection 
+                ? `${sessionData.mapCollection.name} - ${sessionData.gameMode.name}`
+                : `${sessionData.map.name} - ${sessionData.gameMode.name}`
+              }
             </h2>
             <p className="text-gray-400">
               Players: {sessionData.players.join(', ')} • Max {maxEvidence} evidence
@@ -224,87 +248,114 @@ const AddRun = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Floor and Room Selection, Perfect Game, and Timer Row */}
+        {/* Floor/Room Selection and Wing Selection Row */}
         <div className="flex items-end gap-6">
-          {/* Floor and Room Selection - Takes remaining space */}
-          <div className="flex-1">
-            <FloorRoomSelector
-              selectedMap={sessionData.map}
-              selectedFloor={selectedFloor}
-              onFloorChange={handleFloorChange}
-              selectedRoom={selectedRoom}
-              onRoomChange={handleRoomChange}
-            />
+          {/* Section 1: Wing, Floor, Room (dynamic grid based on presence of wing) */}
+          <div className={`flex-1 grid gap-4 items-end ${
+            sessionData.mapCollection ? 'grid-cols-3' : 'grid-cols-2'
+          }`}>
+            {/* Wing Selection (if using a collection) */}
+            {sessionData.mapCollection && (
+              <div>
+                <CollectionMapSelector
+                  mapCollection={sessionData.mapCollection}
+                  availableMaps={maps}
+                  selectedMap={selectedCollectionMap}
+                  onMapChange={setSelectedCollectionMap}
+                />
+              </div>
+            )}
+
+            {/* Floor and Room Selection - only show if we have a selected map */}
+            {(sessionData.map || selectedCollectionMap) && (
+              <div className="col-span-2">
+                <FloorRoomSelector
+                  selectedMap={sessionData.map || selectedCollectionMap}
+                  selectedFloor={selectedFloor}
+                  onFloorChange={handleFloorChange}
+                  selectedRoom={selectedRoom}
+                  onRoomChange={handleRoomChange}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Perfect Game Toggle - Fixed width */}
-          <div className="w-24">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Perfect
-            </label>
-            <button
-              type="button"
-              onClick={() => handlePerfectGameToggle(!isPerfectGame)}
-              className={`w-full py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 h-[42px] ${
-                isPerfectGame
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-600 border border-gray-500'
-              }`}
-            >
-              <span className="text-lg">{isPerfectGame ? '⭐' : '☆'}</span>
-              {isPerfectGame ? 'Yes' : 'No'}
-            </button>
-          </div>
+          {/* Section 2: Perfect and Timer (minimal width) */}
+          <div className="flex items-end gap-4">
+            {/* Perfect Game Toggle */}
+            <div className="w-24">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Perfect
+              </label>
+              <button
+                type="button"
+                onClick={() => handlePerfectGameToggle(!isPerfectGame)}
+                className={`w-full py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 h-[42px] ${
+                  isPerfectGame
+                    ? 'bg-yellow-600 text-white'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-600 border border-gray-500'
+                }`}
+              >
+                <span className="text-lg">{isPerfectGame ? '⭐' : '☆'}</span>
+                {isPerfectGame ? 'Yes' : 'No'}
+              </button>
+            </div>
 
-          {/* Timer Display - Fixed width */}
-          <div className="w-32">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Timer
-            </label>
-            <div className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 h-[42px] flex items-center justify-center">
-              <div className="text-lg font-mono font-bold text-green-400">
-                {formatTime(currentRunTime)}
+            {/* Timer Display */}
+            <div className="w-32">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Timer
+              </label>
+              <div className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 h-[42px] flex items-center justify-center">
+                <div className="text-lg font-mono font-bold text-green-400">
+                  {formatTime(currentRunTime)}
+                </div>
               </div>
             </div>
           </div>
         </div>
         
-        <div className='flex flex-column justify-between gap-10'>
-          <CursedPossessionSelector
-            cursedPossessions={availableCursedPossessions}
-            selectedCursedPossession={selectedCursedPossession}
-            onCursedPossessionChange={handleCursedPossessionChange}
-          />
-          <EvidenceSelector
-            evidence={availableEvidence}
-            selectedEvidenceIds={selectedEvidenceIds}
-            excludedEvidenceIds={excludedEvidenceIds}
-            maxEvidence={maxEvidence}
-            onEvidenceToggle={handleEvidenceToggle}
-            onEvidenceExclude={handleEvidenceExclude}
-            ghosts={ghosts}
-          />
-        </div>
-        
-        <GhostSelector
-          ghosts={ghosts}
-          evidence={evidence}
-          selectedEvidenceIds={selectedEvidenceIds}
-          excludedEvidenceIds={excludedEvidenceIds}
-          selectedGhost={selectedGhost}
-          actualGhost={actualGhost}
-          excludedGhosts={excludedGhosts}
-          onGhostSelect={handleGhostSelect}
-          onActualGhostSelect={handleActualGhostSelect}
-          onGhostExclude={handleGhostExclude}
-        />
-        
-        <PlayerStatus
-          todaysPlayers={sessionData.players}
-          playerStates={playerStates}
-          onPlayerStatusToggle={handlePlayerStatusToggle}
-          onChangePlayersClick={() => {}} // Disabled during session
-        />
+        {/* Only show the rest of the form if we have a map selected */}
+        {(sessionData.map || selectedCollectionMap) && (
+          <>
+            <div className='flex flex-column justify-between gap-10'>
+              <CursedPossessionSelector
+                cursedPossessions={availableCursedPossessions}
+                selectedCursedPossession={selectedCursedPossession}
+                onCursedPossessionChange={handleCursedPossessionChange}
+              />
+              <EvidenceSelector
+                evidence={availableEvidence}
+                selectedEvidenceIds={selectedEvidenceIds}
+                excludedEvidenceIds={excludedEvidenceIds}
+                maxEvidence={maxEvidence}
+                onEvidenceToggle={handleEvidenceToggle}
+                onEvidenceExclude={handleEvidenceExclude}
+                ghosts={ghosts}
+              />
+            </div>
+            
+            <GhostSelector
+              ghosts={ghosts}
+              evidence={evidence}
+              selectedEvidenceIds={selectedEvidenceIds}
+              excludedEvidenceIds={excludedEvidenceIds}
+              selectedGhost={selectedGhost}
+              actualGhost={actualGhost}
+              excludedGhosts={excludedGhosts}
+              onGhostSelect={handleGhostSelect}
+              onActualGhostSelect={handleActualGhostSelect}
+              onGhostExclude={handleGhostExclude}
+            />
+            
+            <PlayerStatus
+              todaysPlayers={sessionData.players}
+              playerStates={playerStates}
+              onPlayerStatusToggle={handlePlayerStatusToggle}
+              onChangePlayersClick={() => {}} // Disabled during session
+            />
+          </>
+        )}
 
         <div className="pt-4 border-t border-gray-600">
           <button
@@ -317,7 +368,10 @@ const AddRun = () => {
 
           {!canSubmit && (
             <p className="mt-2 text-sm text-gray-400 text-center">
-              No active session found
+              {sessionData.mapCollection && !selectedCollectionMap
+                ? `Please select a ${sessionData.mapCollection.selectionLabel.toLowerCase()} to continue`
+                : 'Complete the form to save the run'
+              }
             </p>
           )}
         </div>

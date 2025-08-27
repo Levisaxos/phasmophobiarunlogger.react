@@ -1,14 +1,14 @@
 
 // src/components/filters/DeathsFilter.jsx
 import React from 'react';
-
+import { HoverSelect } from '../common';
 const DeathsFilter = ({ value, onChange, options }) => {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-300 mb-2">
         Filter by Deaths
       </label>
-      <select
+      <HoverSelect
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -21,7 +21,7 @@ const DeathsFilter = ({ value, onChange, options }) => {
             {playerDeath.name} Died ({playerDeath.deathCount})
           </option>
         ))}
-      </select>
+      </HoverSelect>
     </div>
   );
 };

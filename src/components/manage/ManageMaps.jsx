@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../../hooks/useData';
 import { UI_CONSTANTS } from '../../constants';
+import { HoverSelect } from '../common';
 
 const ManageMapsPage = () => {
   const { maps, loading, error, createMap, updateMap, deleteMap, toggleMapArchived } = useData();
@@ -378,7 +379,7 @@ const ManageMapsPage = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Map Size
                   </label>
-                  <select
+                  <HoverSelect
                     value={editingMap.size}
                     onChange={(e) => setEditingMap({ ...editingMap, size: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-500 text-gray-300 bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -386,7 +387,7 @@ const ManageMapsPage = () => {
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
                     <option value="large">Large</option>
-                  </select>
+                  </HoverSelect>
                 </div>
 
                 {/* Floors */}

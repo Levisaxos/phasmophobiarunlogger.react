@@ -1,5 +1,6 @@
 // components/runs/FloorRoomSelector.jsx - Fixed auto-selection and room dropdown updates
 import React, { useEffect, useCallback, useMemo } from 'react';
+import { HoverSelect } from '../common';
 
 const FloorRoomSelector = ({
   selectedMap,
@@ -98,7 +99,7 @@ const FloorRoomSelector = ({
             <span className="ml-2 text-xs text-green-400">(auto-selected)</span>
           )}
         </label>
-        <select
+        <HoverSelect
           value={selectedFloor?.id || ''}
           onChange={handleFloorChange}
           disabled={availableFloors.length === 1}
@@ -117,7 +118,7 @@ const FloorRoomSelector = ({
                 </option>
               );
             })}
-        </select>
+        </HoverSelect>
       </div>
 
       {/* Room Selection */}
@@ -128,8 +129,9 @@ const FloorRoomSelector = ({
             <span className="ml-2 text-xs text-green-400">(auto-selected)</span>
           )}
         </label>
-        <select
+        <HoverSelect
           disabled={!selectedFloor || availableRooms.length === 1}
+          enableSearch={true}
           value={selectedRoom?.id || ''}
           onChange={handleRoomChange}
           className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -144,7 +146,7 @@ const FloorRoomSelector = ({
               {room.name}
             </option>
           ))}
-        </select>
+        </HoverSelect>
       </div>
     </div>
   );

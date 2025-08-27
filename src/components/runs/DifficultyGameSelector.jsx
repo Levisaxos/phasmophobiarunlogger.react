@@ -1,5 +1,6 @@
 // components/AddRun/DifficultyGameSelector.jsx
 import React from 'react';
+import { HoverSelect } from '../common';
 
 const DifficultyGameSelector = ({
   gameModes,
@@ -26,7 +27,7 @@ const DifficultyGameSelector = ({
           </div>
         ) : (
           <div className="space-y-2">
-            <select
+            <HoverSelect
               value={selectedGameMode || ''}
               onChange={(e) => onGameModeChange(e.target.value ? parseInt(e.target.value) : null)}
               className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -37,7 +38,7 @@ const DifficultyGameSelector = ({
                   {gameMode.name} (Max {gameMode.maxEvidence || 0} evidence)
                 </option>
               ))}
-            </select>
+            </HoverSelect>
           </div>
 
         )}

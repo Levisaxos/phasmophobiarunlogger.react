@@ -126,7 +126,7 @@ const RunsList = ({
                         {/* Timer Display */}
                         {run.formattedRunTime && (
                           <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded font-mono">
-                            ⏱️ {run.formattedRunTime}
+                            {run.formattedRunTime}
                           </span>
                         )}
                       </div>

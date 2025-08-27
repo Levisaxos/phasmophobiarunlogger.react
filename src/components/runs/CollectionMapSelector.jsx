@@ -1,5 +1,6 @@
 // components/runs/CollectionMapSelector.jsx - Map selection from a collection
 import React from 'react';
+import { HoverSelect } from '../common';
 
 const CollectionMapSelector = ({
   mapCollection,
@@ -42,7 +43,7 @@ const CollectionMapSelector = ({
       <label className="block text-sm font-medium text-gray-300 mb-2">
         Select {mapCollection.selectionLabel}
       </label>
-      <select
+      <HoverSelect
         value={selectedMap?.id || ''}
         onChange={handleMapChange}
         className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -69,7 +70,7 @@ const CollectionMapSelector = ({
               </option>
             );
           })}
-      </select>
+      </HoverSelect>
     </div>
   );
 };

@@ -1,9 +1,10 @@
-// src/components/runs/ListRuns.jsx - Updated to pass additional props
+// src/components/runs/ListRuns.jsx - Updated with TimingStats integration
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useRunFilters } from '../../hooks/useRunFilters';
 import { FiltersPanel, ExactPlayerFilter } from '../filters';
 import RunsList from './RunsList';
+import TimingStats from './TimingStats';
 import RunDetails from './RunDetails';
 
 const ListRuns = () => {
@@ -40,13 +41,23 @@ const ListRuns = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full" style={{ height: 'calc(100vh - 140px)' }}>
-      {/* Exact Player Filter Section */}
-      <ExactPlayerFilter
-        allPlayers={allPlayers}
-        selectedPlayerFilter={selectedPlayerFilter}
-        onPlayerFilterChange={handlePlayerFilterChange}
-        individualPlayerCounts={individualPlayerCounts}
-      />
+      {/* Top Row: Exact Player Filter and Timing Statistics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Exact Player Filter Section */}
+        <ExactPlayerFilter
+          allPlayers={allPlayers}
+          selectedPlayerFilter={selectedPlayerFilter}
+          onPlayerFilterChange={handlePlayerFilterChange}
+          individualPlayerCounts={individualPlayerCounts}
+        />
+
+        {/* Timing Statistics Section */}
+        <TimingStats
+          runs={filteredRuns}
+          maps={maps}
+          ghosts={ghosts}
+        />
+      </div>
 
       {/* Main Content Area */}
       <div className="flex gap-6 flex-1 min-h-0">

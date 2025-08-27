@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
+import { HoverSelect } from '../common';
 
 const ManageGameModes = () => {
   const { gameModes, loading, error, createGameMode, updateGameMode, deleteGameMode, toggleGameModeActive } = useData();
@@ -174,7 +175,7 @@ const ManageGameModes = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Maximum Evidence Count *
                   </label>
-                  <select
+                  <HoverSelect
                     value={editingGameMode.maxEvidence}
                     onChange={(e) => setEditingGameMode({ ...editingGameMode, maxEvidence: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -183,7 +184,7 @@ const ManageGameModes = () => {
                     <option value={1}>1 Evidence Maximum</option>
                     <option value={2}>2 Evidence Maximum</option>
                     <option value={3}>3 Evidence Maximum (Standard)</option>
-                  </select>
+                  </HoverSelect>
                   <p className="mt-1 text-xs text-gray-400">
                     Controls how many evidence types players can find in this game mode
                   </p>

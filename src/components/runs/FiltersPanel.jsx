@@ -1,5 +1,6 @@
 import React from 'react';
 import FilterDropdown from '../common/FilterDropdown';
+import { HoverSelect } from '../common';
 
 const FiltersPanel = ({
   filters,
@@ -99,7 +100,7 @@ const FiltersPanel = ({
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Filter by Cursed Possession
             </label>
-            <select
+            <HoverSelect
               value={cursedPossessionFilter}
               onChange={(e) => onFilterChange('cursedPossession', e.target.value)}
               className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -111,7 +112,7 @@ const FiltersPanel = ({
                   {possession.name} ({possession.runCount})
                 </option>
               ))}
-            </select>
+            </HoverSelect>
           </div>
 
           {/* Deaths Filter */}
@@ -119,7 +120,7 @@ const FiltersPanel = ({
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Filter by Deaths
             </label>
-            <select
+            <HoverSelect
               value={deathsFilter}
               onChange={(e) => onFilterChange('deaths', e.target.value)}
               className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -132,7 +133,7 @@ const FiltersPanel = ({
                   {playerDeath.name} Died ({playerDeath.deathCount})
                 </option>
               ))}
-            </select>
+            </HoverSelect>
           </div>
 
           {hasActiveFilters && (

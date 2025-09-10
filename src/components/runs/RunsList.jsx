@@ -1,6 +1,6 @@
-// src/components/runs/RunsList.jsx - Updated with timer display
+// src/components/runs/RunsList.jsx - Improved layout and ghost display
 import React from 'react';
-import { formatDate, formatTime } from '../../utils/dateUtils';
+import { formatTime } from '../../utils/dateUtils';
 import { getRoomName } from '../../utils/formatUtils';
 
 const RunsList = ({
@@ -9,6 +9,7 @@ const RunsList = ({
   onRunSelect,
   maps,
   ghosts,
+  gameModes = [], // Default to empty array if not provided
   availableCursedPossessions
 }) => {
   // Get run details
@@ -16,12 +17,24 @@ const RunsList = ({
     const map = maps.find(m => m.id === run.mapId);
     const ghost = ghosts.find(g => g.id === run.ghostId);
     const actualghost = ghosts.find(g => g.id === run.actualGhostId);
+    const gameMode = gameModes.find(gm => gm.id === run.gameModeId);
     const cursedPossession = run.cursedPossessionId ?
       availableCursedPossessions.find(p => p.id === run.cursedPossessionId) : null;
     
     const roomName = getRoomName(run, map);
     
-    return { map, ghost, cursedPossession, actualghost, roomName };
+    return { map, ghost, cursedPossession, actualghost, gameMode, roomName };
+  };
+
+  // Format date to compact format (e.g., "Mo 01-01-25")
+  const formatCompactDate = (dateString) => {
+    const date = new Date(dateString);
+    const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const dayAbbr = dayNames[date.getDay()];
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    return `${dayAbbr} ${day}-${month}-${year}`;
   };
 
   // Safe player formatting that ensures we never render objects
@@ -91,6 +104,36 @@ const RunsList = ({
     }
   };
 
+  // Format ghost display with better incorrect guess handling
+  const formatGhostDisplay = (ghost, actualGhost, wasCorrect) => {
+    if (!ghost && !actualGhost) {
+      return <span className="text-gray-400">Unknown Ghost</span>;
+    }
+
+    if (wasCorrect || !ghost || ghost.id === actualGhost?.id) {
+      // Correct guess or only one ghost - show in neutral color
+      const displayGhost = actualGhost || ghost;
+      return (
+        <span className="text-blue-400">
+          {displayGhost.name || 'Unknown Ghost'}
+        </span>
+      );
+    } else {
+      // Incorrect guess - show both with clear visual distinction
+      return (
+        <div className="flex items-center gap-1">
+          <span className="text-red-400 line-through text-xs">
+            {ghost.name}
+          </span>
+          <span className="text-gray-400">→</span>
+          <span className="text-blue-400">
+            {actualGhost?.name || 'Unknown Ghost'}
+          </span>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="w-72 bg-gray-700 rounded-lg shadow flex flex-col h-full">
       <div className="p-4 border-b border-gray-600 flex-shrink-0">
@@ -108,7 +151,7 @@ const RunsList = ({
             <div className="space-y-2">
               {runs.map((run) => {
                 try {
-                  const { map, ghost, cursedPossession, actualghost, roomName } = getRunDetails(run);
+                  const { map, ghost, cursedPossession, actualghost, gameMode, roomName } = getRunDetails(run);
                   
                   return (
                     <button
@@ -119,10 +162,14 @@ const RunsList = ({
                         : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-600'
                         }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium">
-                          Run #{run.runNumber} - {formatDate(run.date)}
-                        </span>
+                      {/* Header Row: Run # + Date + Timer */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Run #{run.runNumber}</span>
+                          <span className="text-xs text-gray-400">
+                            {formatCompactDate(run.date)}
+                          </span>
+                        </div>
                         {/* Timer Display */}
                         {run.formattedRunTime && (
                           <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded font-mono">
@@ -130,19 +177,40 @@ const RunsList = ({
                           </span>
                         )}
                       </div>
+                      
+                      {/* Content Rows */}
                       <div className="text-xs text-gray-400 space-y-1">
-                        <div>{map?.name || 'Unknown Map'} - {roomName}</div>
-                        <div className='flex gap-2'>
-                          {ghost?.name !== actualghost?.name && (
-                            <span className='text-red-500 line-through'>{ghost?.name}</span>
+                        {/* Map + Difficulty Row */}
+                        <div className="flex items-center justify-between">
+                          <span className="truncate">{map?.name || 'Unknown Map'} - {roomName}</span>
+                          {gameMode && (
+                            <span className="text-orange-400 text-xs px-1.5 py-0.5 rounded bg-orange-900/20 ml-2 flex-shrink-0">
+                              {gameMode.name}
+                            </span>
                           )}
-                          <span className='text-green-500'>{actualghost?.name || 'Unknown Ghost'}</span>
                         </div>
+                        
+                        {/* Ghost Row */}
+                        <div>
+                          {formatGhostDisplay(ghost, actualghost, run.wasCorrect)}
+                        </div>
+                        
+                        {/* Cursed Possession Row (if present) */}
                         {cursedPossession && (
-                          <div className="text-purple-400">{cursedPossession.name}</div>
+                          <div className="text-purple-400 truncate">
+                            {cursedPossession.name}
+                          </div>
                         )}
-                        <div>{formatPlayersWithStatus(run)}</div>
-                        <div>{formatTime(run.timestamp)}</div>
+                        
+                        {/* Players Row */}
+                        <div className="truncate">
+                          {formatPlayersWithStatus(run)}
+                        </div>
+                        
+                        {/* Time Row */}
+                        <div className="text-gray-500">
+                          {formatTime(run.timestamp)}
+                        </div>
                       </div>
                     </button>
                   );

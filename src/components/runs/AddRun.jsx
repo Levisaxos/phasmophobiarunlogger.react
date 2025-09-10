@@ -1,4 +1,4 @@
-
+// src/components/runs/AddRun.jsx - Fixed to properly return to session setup
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
@@ -110,14 +110,18 @@ const AddRun = () => {
   };
 
   const handleEndRun = () => {
-    // Keep session data but clear the map to go back to session setup
-    setSessionData(prev => ({
-      ...prev,
-      map: null
-    }));
+    // FIXED: Clear both map and mapCollection to ensure we go back to session setup
+    // Keep only the persistent session data (players and game mode)
+    setSessionData(prev => prev ? ({
+      players: prev.players,
+      gameMode: prev.gameMode,
+      map: null,           // Clear individual map
+      mapCollection: null  // Clear map collection
+    }) : null);
+    
     setSessionStartTime(null);
     setCurrentRunTime(0);
-    setSelectedCollectionMap(null);
+    setSelectedCollectionMap(null); // Clear selected collection map
     resetForm();
   };
 
@@ -174,7 +178,7 @@ const AddRun = () => {
 
       const newRun = await createRun(runData);
       
-      // End the current run and go back to session setup
+      // FIXED: Always end the run and go back to session setup regardless of map type
       handleEndRun();
 
       success(`Run saved successfully! Run #${newRun.runNumber} for ${sessionData.players.length} player${sessionData.players.length > 1 ? 's' : ''} today. Time: ${formatTime(currentRunTime)}`);
@@ -217,7 +221,7 @@ const AddRun = () => {
     );
   }
 
-  // Show session setup if no session is active OR no map/collection map is selected
+  // FIXED: Show session setup if no session OR no map/collection is selected
   if (!sessionData || (!sessionData.map && !sessionData.mapCollection)) {
     return <SessionSetup onStartSession={handleStartSession} initialData={sessionData} />;
   }

@@ -1,4 +1,4 @@
-// src/hooks/useRunFilters.js - Fixed exact player matching
+// src/hooks/useRunFilters.js - Fixed exact player matching logic
 import { useState, useMemo } from 'react';
 
 export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
@@ -69,14 +69,15 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     return playerNames.sort(); // Sort for consistent comparison
   };
 
-  // Helper function to check if run matches exact player selection
+  // FIXED: Helper function to check if run matches exact player selection
   const matchesExactPlayers = (run, selectedPlayers) => {
+    // If no players selected, show all runs (no filter active)
     if (selectedPlayers.length === 0) return true;
 
     const runPlayers = getPlayerNamesFromRun(run);
-    const sortedSelectedPlayers = [...selectedPlayers].sort(); // Sort for consistent comparison
+    const sortedSelectedPlayers = [...selectedPlayers].sort();
     
-    // Must have same length and same players
+    // Must have exact same length and exact same players
     if (runPlayers.length !== sortedSelectedPlayers.length) return false;
     
     // Check if arrays are identical (both are sorted)
@@ -107,53 +108,43 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
       case 'deaths':
         if (filterValue === 'none') {
           return runs.filter(run => {
-            // Check if anyone died in this run
             let hasDeaths = false;
             
             if (run.players && Array.isArray(run.players)) {
-              // Check new format (players with embedded status)
               hasDeaths = run.players.some(player => {
                 if (typeof player === 'object' && player !== null) {
                   return player.status === 'dead';
                 } else {
-                  // Legacy format - check playerStates
                   return run.playerStates && run.playerStates[player] === 'dead';
                 }
               });
             } else if (run.playerStates) {
-              // Fallback to legacy playerStates only
               hasDeaths = Object.values(run.playerStates).some(status => status === 'dead');
             }
             
-            return !hasDeaths; // Return runs with NO deaths
+            return !hasDeaths;
           });
         } else if (filterValue === 'any') {
           return runs.filter(run => {
-            // Check if anyone died in this run
             let hasDeaths = false;
             
             if (run.players && Array.isArray(run.players)) {
-              // Check new format (players with embedded status)
               hasDeaths = run.players.some(player => {
                 if (typeof player === 'object' && player !== null) {
                   return player.status === 'dead';
                 } else {
-                  // Legacy format - check playerStates
                   return run.playerStates && run.playerStates[player] === 'dead';
                 }
               });
             } else if (run.playerStates) {
-              // Fallback to legacy playerStates only
               hasDeaths = Object.values(run.playerStates).some(status => status === 'dead');
             }
             
-            return hasDeaths; // Return runs with ANY deaths
+            return hasDeaths;
           });
         } else {
-          // Filter by specific player who died
           return runs.filter(run => {
             if (run.players && Array.isArray(run.players)) {
-              // Check new format (players with embedded status)
               return run.players.some(player => {
                 let playerName;
                 let playerStatus;
@@ -169,7 +160,6 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
                 return playerName === filterValue && playerStatus === 'dead';
               });
             } else if (run.playerStates) {
-              // Fallback to legacy playerStates only
               return run.playerStates[filterValue] === 'dead';
             }
             
@@ -250,7 +240,7 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     const ghostFilteredRuns = getFilteredRunsExcluding('ghost');
     const ghostCounts = {};
     ghostFilteredRuns.forEach(run => {
-      if (run.ghostId) { // Only count runs that have a ghost
+      if (run.ghostId) {
         ghostCounts[run.ghostId] = (ghostCounts[run.ghostId] || 0) + 1;
       }
     });
@@ -291,9 +281,7 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
     deathsFilteredRuns.forEach(run => {
       let runHasDeaths = false;
 
-      // Handle both new player format (with embedded status) and legacy format (with separate playerStates)
       if (run.players && Array.isArray(run.players)) {
-        // Check for deaths in the new format (players array with status)
         run.players.forEach(player => {
           let playerName;
           let playerStatus;
@@ -312,7 +300,6 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
           }
         });
       } else if (run.playerStates) {
-        // Fallback to legacy playerStates format
         Object.entries(run.playerStates).forEach(([playerName, status]) => {
           if (status === 'dead') {
             playerDeathCounts[playerName] = (playerDeathCounts[playerName] || 0) + 1;
@@ -353,6 +340,7 @@ export const useRunFilters = (runs, maps, ghosts, cursedPossessions) => {
   const filteredRuns = useMemo(() => {
     let filtered = [...runs];
 
+    // FIXED: Apply exact player filter correctly
     filtered = filtered.filter(run => matchesExactPlayers(run, selectedPlayerFilter));
 
     Object.entries(filters).forEach(([key, value]) => {

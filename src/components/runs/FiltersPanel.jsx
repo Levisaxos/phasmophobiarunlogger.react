@@ -1,3 +1,4 @@
+// src/components/runs/FiltersPanel.jsx - Fresh version with exact player filter integrated
 import React from 'react';
 import FilterDropdown from '../common/FilterDropdown';
 import { HoverSelect } from '../common';
@@ -8,7 +9,12 @@ const FiltersPanel = ({
   filterOptions,
   onClearFilters,
   totalRuns,
-  filteredCount
+  filteredCount,
+  // Exact player filter props
+  allPlayers = [],
+  selectedPlayerFilter = [],
+  onPlayerFilterChange,
+  individualPlayerCounts = {}
 }) => {
   const {
     dateFilter,
@@ -19,7 +25,7 @@ const FiltersPanel = ({
     deathsFilter
   } = filters;
 
-  const hasActiveFilters = dateFilter || playerFilter || mapFilter || ghostFilter || cursedPossessionFilter || deathsFilter;
+  const hasActiveFilters = dateFilter || playerFilter || mapFilter || ghostFilter || cursedPossessionFilter || deathsFilter || selectedPlayerFilter.length > 0;
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -39,6 +45,45 @@ const FiltersPanel = ({
       </div>
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="p-4 space-y-4">
+          
+          {/* Exact Player Combination Filter */}
+          <div className="bg-gray-800 border border-gray-600 rounded-lg p-3">
+            <h4 className="text-sm font-medium text-blue-400 mb-3">
+              Exact Player Combination
+            </h4>
+            
+            {allPlayers && allPlayers.length > 0 ? (
+              <div className="grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
+                {allPlayers.map(playerName => {
+                  const isSelected = selectedPlayerFilter.includes(playerName);
+                  const playerGameCount = individualPlayerCounts[playerName] || 0;
+
+                  return (
+                    <button
+                      key={playerName}
+                      onClick={() => onPlayerFilterChange && onPlayerFilterChange(playerName)}
+                      className={`px-2 py-1 text-xs rounded transition-colors duration-200 text-left flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border border-blue-500'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600'
+                      }`}
+                    >
+                      <span className="truncate">{playerName}</span>
+                      <span className="text-xs ml-1">({playerGameCount})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-400">No players available</div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-600 pt-2">
+            <h4 className="text-sm font-medium text-orange-400 mb-3">Individual Filters</h4>
+          </div>
+
           {/* Date Filter */}
           <FilterDropdown
             label="Filter by Date"
@@ -139,9 +184,9 @@ const FiltersPanel = ({
           {hasActiveFilters && (
             <button
               onClick={onClearFilters}
-              className="w-full px-3 py-2 text-sm bg-gray-600 text-gray-300 rounded-md hover:bg-gray-500 transition-colors duration-200"
+              className="w-full px-3 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
             >
-              Clear Filters
+              Clear All Filters
             </button>
           )}
 

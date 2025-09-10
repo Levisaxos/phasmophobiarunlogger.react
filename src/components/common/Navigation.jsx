@@ -1,4 +1,4 @@
-// components/common/Navigation.jsx - Replace alert() calls with toast notifications
+// components/common/Navigation.jsx - Fixed export messaging
 import React, { useState } from 'react';
 import { dataService } from '../../services';
 import { ClearDataModal, ClearRunDataModal } from '../modals';
@@ -56,7 +56,8 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   const exportData = async () => {
     try {
       await dataService.exportToFile();
-      success('Data exported successfully!');
+      // FIXED: Changed message to reflect what actually happened
+      info('Download started! Please check your browser\'s download folder or save the file when prompted.');
     } catch (err) {
       console.error('Export failed:', err);
       error('Export failed: ' + err.message);

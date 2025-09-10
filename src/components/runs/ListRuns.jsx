@@ -1,15 +1,13 @@
-// src/components/runs/ListRuns.jsx - Updated with TimingStats integration
-import React, { useState } from 'react';
+// src/components/runs/ListRuns.jsx - Fresh version with proper imports and integrated filters
+import React from 'react';
 import { useData } from '../../hooks/useData';
 import { useRunFilters } from '../../hooks/useRunFilters';
-import { FiltersPanel, ExactPlayerFilter } from '../filters';
-import RunsList from './RunsList';
+import FiltersPanel from './FiltersPanel';
+import CompactRunsView from './CompactRunsView';
 import TimingStats from './TimingStats';
-import RunDetails from './RunDetails';
 
 const ListRuns = () => {
   const { maps, ghosts, runs, evidence, gameModes, cursedPossessions, loading, error } = useData();
-  const [selectedRun, setSelectedRun] = useState(null);
 
   const {
     filters,
@@ -41,17 +39,8 @@ const ListRuns = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full" style={{ height: 'calc(100vh - 140px)' }}>
-      {/* Top Row: Exact Player Filter and Timing Statistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Exact Player Filter Section */}
-        <ExactPlayerFilter
-          allPlayers={allPlayers}
-          selectedPlayerFilter={selectedPlayerFilter}
-          onPlayerFilterChange={handlePlayerFilterChange}
-          individualPlayerCounts={individualPlayerCounts}
-        />
-
-        {/* Timing Statistics Section */}
+      {/* Top Row: Timing Statistics (Full Width) */}
+      <div className="w-full">
         <TimingStats
           runs={filteredRuns}
           maps={maps}
@@ -59,8 +48,9 @@ const ListRuns = () => {
         />
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content Area: Filters + Runs */}
       <div className="flex gap-6 flex-1 min-h-0">
+        {/* Left: Filters Panel with Integrated Exact Player Filter */}
         <FiltersPanel
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -68,24 +58,21 @@ const ListRuns = () => {
           onClearFilters={clearFilters}
           totalRuns={runs.length}
           filteredCount={filteredRuns.length}
+          // Exact player filter props
+          allPlayers={allPlayers}
+          selectedPlayerFilter={selectedPlayerFilter}
+          onPlayerFilterChange={handlePlayerFilterChange}
+          individualPlayerCounts={individualPlayerCounts}
         />
 
-        <RunsList
+        {/* Right: Runs Display */}
+        <CompactRunsView
           runs={filteredRuns}
-          selectedRun={selectedRun}
-          onRunSelect={setSelectedRun}
-          maps={maps}
-          ghosts={ghosts}
-          availableCursedPossessions={cursedPossessions}
-        />
-
-        <RunDetails
-          selectedRun={selectedRun}
           maps={maps}
           ghosts={ghosts}
           evidence={evidence}
           gameModes={gameModes}
-          availableCursedPossessions={cursedPossessions}
+          cursedPossessions={cursedPossessions}
         />
       </div>
     </div>

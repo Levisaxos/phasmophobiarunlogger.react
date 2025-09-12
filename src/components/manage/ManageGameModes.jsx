@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
-import { HoverSelect } from '../common';
+import  HoverSelect  from '../common/HoverSelect';
 
 const ManageGameModes = () => {
   const { gameModes, loading, error, createGameMode, updateGameMode, deleteGameMode, toggleGameModeActive } = useData();

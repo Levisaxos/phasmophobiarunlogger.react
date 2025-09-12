@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useData } from '../../hooks/useData';
 import { UI_CONSTANTS } from '../../constants';
-import { HoverSelect } from '../common';
+import  HoverSelect  from '../common/HoverSelect';
 
 const ManageMapsPage = () => {
   const { maps, loading, error, createMap, updateMap, deleteMap, toggleMapArchived } = useData();

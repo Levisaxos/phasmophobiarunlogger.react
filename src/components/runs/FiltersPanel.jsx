@@ -1,7 +1,7 @@
 // src/components/runs/FiltersPanel.jsx - Fresh version with exact player filter integrated
 import React from 'react';
 import FilterDropdown from '../common/FilterDropdown';
-import { HoverSelect } from '../common';
+import  HoverSelect  from '../common/HoverSelect';
 
 const FiltersPanel = ({
   filters,

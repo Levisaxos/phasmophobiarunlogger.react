@@ -1,6 +1,6 @@
 // components/runs/CollectionMapSelector.jsx - Map selection from a collection
 import React from 'react';
-import { HoverSelect } from '../common';
+import  HoverSelect  from '../common/HoverSelect';
 
 const CollectionMapSelector = ({
   mapCollection,

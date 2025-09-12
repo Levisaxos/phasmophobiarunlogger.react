@@ -1,6 +1,6 @@
 // components/runs/FloorRoomSelector.jsx - Fixed auto-selection and room dropdown updates
 import React, { useEffect, useCallback, useMemo } from 'react';
-import { HoverSelect } from '../common';
+import  HoverSelect  from '../common/HoverSelect';
 
 const FloorRoomSelector = ({
   selectedMap,

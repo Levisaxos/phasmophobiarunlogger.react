@@ -1,7 +1,8 @@
 // components/common/Navigation.jsx
 import React, { useState } from 'react';
-import { dataService } from '../../services';
-import { ClearDataModal, ClearRunDataModal } from '../modals';
+import { dataService }  from '../../services/dataService';
+import ClearDataModal from '../modals/ClearDataModal';
+import  ClearRunDataModal  from '../modals/ClearRunDataModal';
 import { useToast } from '../../hooks/useToast';
 
 const Navigation = ({ activeTab, setActiveTab }) => {

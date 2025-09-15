@@ -1,7 +1,8 @@
 // components/manage/ManageChallengeModes.jsx
 import React, { useState, useEffect } from 'react';
-import { challengeModesService, mapsService } from '../../services';
-import { ManageLayout } from '../common';
+import {  challengeModesService} from '../../services/api/challengeModesService'
+ import { mapsService } from '../../services/api/mapsService';
+import  ManageLayout  from '../common/ManageLayout';
 
 const ManageChallengeModes = () => {
   const [challengeModes, setChallengeModes] = useState([]);

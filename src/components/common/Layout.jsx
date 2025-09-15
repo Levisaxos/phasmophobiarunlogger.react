@@ -3,16 +3,15 @@ import React, { useState, useEffect } from 'react';
 import  Navigation  from './Navigation';
 
 // Import from organized folders
-import { ListRuns, AddRun } from '../runs';
-import {
-  ManageMaps,
-  ManageGhosts,
-  ManageEvidence,
-  ManageCursedPossessions,
-  ManagePlayers,
-  ManageGameModes,
-  ManageChallengeModes
-} from '../manage';
+import  ListRuns from '../runs/ListRuns';
+import  AddRun from  '../runs/AddRun';
+import ManageMaps from '../manage/ManageMaps';
+import ManageGhosts from '../manage/ManageGhosts';
+import ManageEvidence from '../manage/ManageEvidence';
+import ManageCursedPossessions from '../manage/ManageCursedPossessions';
+import ManagePlayers from '../manage/ManagePlayers';
+import ManageGameModes from '../manage/ManageGameModes';
+import ManageChallengeModes from '../manage/ManageChallengeModes';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('list');

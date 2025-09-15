@@ -1,4 +1,4 @@
-// components/common/Navigation.jsx - Fixed export messaging
+// components/common/Navigation.jsx
 import React, { useState } from 'react';
 import { dataService } from '../../services';
 import { ClearDataModal, ClearRunDataModal } from '../modals';
@@ -23,7 +23,8 @@ const Navigation = ({ activeTab, setActiveTab }) => {
     { id: 'manage-evidence', label: 'Evidence', type: 'tab' },
     { id: 'manage-cursed-possessions', label: 'Cursed Possessions', type: 'tab' },
     { id: 'manage-players', label: 'Players', type: 'tab' },
-    { id: 'manage-game-modes', label: 'Game Modes', type: 'tab' }
+    { id: 'manage-game-modes', label: 'Game Modes', type: 'tab' },
+    { id: 'manage-challenge-modes', label: 'Challenge Modes', type: 'tab' }
   ];
 
   const dataMenuItems = [
@@ -56,7 +57,6 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   const exportData = async () => {
     try {
       await dataService.exportToFile();
-      // FIXED: Changed message to reflect what actually happened
       info('Download started! Please check your browser\'s download folder or save the file when prompted.');
     } catch (err) {
       console.error('Export failed:', err);
@@ -143,42 +143,31 @@ const Navigation = ({ activeTab, setActiveTab }) => {
                       {item.label}
                     </button>
                   ))}
-
-                  {/* Manage dropdown */}
-                  <div 
-                    className="relative"
-                    onMouseEnter={() => setIsManageDropdownOpen(true)}
-                    onMouseLeave={() => setIsManageDropdownOpen(false)}
-                  >
+                  
+                  {/* Manage Dropdown */}
+                  <div className="relative">
                     <button
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-1 ${
+                      onClick={() => setIsManageDropdownOpen(!isManageDropdownOpen)}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center ${
                         isManageTabActive
                           ? 'bg-gray-900 text-white'
                           : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                       }`}
                     >
                       Manage
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          isManageDropdownOpen ? 'rotate-180' : ''
-                        }`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <svg className="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
-
-                    {/* Manage dropdown menu */}
+                    
                     {isManageDropdownOpen && (
-                      <div className="absolute top-full left-0 w-56 bg-gray-700 rounded-md shadow-lg border border-gray-600 z-50">
+                      <div className="absolute left-0 mt-2 w-56 bg-gray-700 rounded-md shadow-lg z-10">
                         <div className="py-1">
                           {manageMenuItems.map((item) => (
                             <button
                               key={item.id}
                               onClick={() => handleMenuClick(item)}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
+                              className={`block w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
                                 activeTab === item.id
                                   ? 'bg-gray-600 text-white'
                                   : 'text-gray-300 hover:bg-gray-600 hover:text-white'
@@ -191,42 +180,27 @@ const Navigation = ({ activeTab, setActiveTab }) => {
                       </div>
                     )}
                   </div>
-
-                  {/* Data dropdown */}
-                  <div 
-                    className="relative"
-                    onMouseEnter={() => setIsDataDropdownOpen(true)}
-                    onMouseLeave={() => setIsDataDropdownOpen(false)}
-                  >
+                  
+                  {/* Data Dropdown */}
+                  <div className="relative">
                     <button
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center gap-1 text-gray-300 hover:bg-gray-700 hover:text-white`}
+                      onClick={() => setIsDataDropdownOpen(!isDataDropdownOpen)}
+                      className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200 flex items-center"
                     >
                       Data
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          isDataDropdownOpen ? 'rotate-180' : ''
-                        }`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <svg className="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
-
-                    {/* Data dropdown menu */}
+                    
                     {isDataDropdownOpen && (
-                      <div className="absolute top-full left-0 w-48 bg-gray-700 rounded-md shadow-lg border border-gray-600 z-50">
+                      <div className="absolute left-0 mt-2 w-56 bg-gray-700 rounded-md shadow-lg z-10">
                         <div className="py-1">
                           {dataMenuItems.map((item) => (
                             <button
                               key={item.id}
                               onClick={() => handleMenuClick(item)}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
-                                item.id === 'clear' || item.id === 'clear-runs'
-                                  ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300'
-                                  : 'text-gray-300 hover:bg-gray-600 hover:text-white'
-                              }`}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition-colors duration-200"
                             >
                               {item.label}
                             </button>
@@ -241,16 +215,15 @@ const Navigation = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
       </nav>
-
-      {/* Clear All Data Modal */}
-      <ClearDataModal
+      
+      {/* Clear Data Modals */}
+      <ClearDataModal 
         isOpen={isClearDataModalOpen}
         onClose={() => setIsClearDataModalOpen(false)}
         onConfirm={handleClearAllData}
       />
-
-      {/* Clear Run Data Modal */}
-      <ClearRunDataModal
+      
+      <ClearRunDataModal 
         isOpen={isClearRunDataModalOpen}
         onClose={() => setIsClearRunDataModalOpen(false)}
         onConfirm={handleClearRunData}

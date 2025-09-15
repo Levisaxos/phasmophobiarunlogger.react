@@ -1,4 +1,4 @@
-// components/Layout.jsx
+// components/common/Layout.jsx
 import React, { useState, useEffect } from 'react';
 import  Navigation  from './Navigation';
 
@@ -10,7 +10,8 @@ import {
   ManageEvidence,
   ManageCursedPossessions,
   ManagePlayers,
-  ManageGameModes
+  ManageGameModes,
+  ManageChallengeModes
 } from '../manage';
 
 const Layout = () => {
@@ -38,6 +39,8 @@ const Layout = () => {
         return <ManagePlayers />;
       case 'manage-game-modes':
         return <ManageGameModes />;
+      case 'manage-challenge-modes':
+        return <ManageChallengeModes />;
       default:
         return <div>Select a tab</div>;
     }

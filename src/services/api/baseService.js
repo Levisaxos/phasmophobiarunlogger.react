@@ -1,5 +1,5 @@
 // services/baseService.js
-// Base service for common localStorage operations - Updated with map collections
+// Base service for common localStorage operations - Updated with challenge modes
 
 const STORAGE_KEY = 'phasmophobia-data';
 let dataCache = null;
@@ -13,7 +13,8 @@ const emptyData = {
   gameModes: [],
   evidence: [],
   cursedPossessions: [],
-  mapCollections: [] // New: map collections for grouped maps
+  mapCollections: [],
+  challengeModes: [] // New: challenge modes
 };
 
 // Simulate async operations
@@ -39,7 +40,8 @@ export const baseService = {
         if (!data.cursedPossessions) data.cursedPossessions = [];
         if (!data.maps) data.maps = [];
         if (!data.ghosts) data.ghosts = [];
-        if (!data.mapCollections) data.mapCollections = []; // Add map collections
+        if (!data.mapCollections) data.mapCollections = [];
+        if (!data.challengeModes) data.challengeModes = []; // Add challenge modes
         
         // Migrate existing data if needed
         await this.migrateData(data);
@@ -54,68 +56,93 @@ export const baseService = {
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      // Even on error, return empty data instead of defaults
+      // If there's an error, return empty data structure
       dataCache = emptyData;
       return emptyData;
     }
   },
 
+  async saveData(data) {
+    await delay(50);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      dataCache = data;
+    } catch (error) {
+      console.error('Error saving data:', error);
+      throw new Error('Failed to save data: ' + error.message);
+    }
+  },
+
+  async getAllData() {
+    return await this.loadData();
+  },
+
+  getNextId(array) {
+    if (!array || array.length === 0) return 1;
+    return Math.max(...array.map(item => item.id || 0)) + 1;
+  },
+
   async migrateData(data) {
-    let needsSaving = false;
+    let hasChanges = false;
 
-    // Migrate ghosts from evidence names to evidence IDs
-    if (data.ghosts && data.evidence) {
-      data.ghosts.forEach(ghost => {
-        if (ghost.evidence && !ghost.evidenceIds) {
-          ghost.evidenceIds = [];
-          ghost.evidence.forEach(evidenceName => {
-            const evidenceItem = data.evidence.find(e => e.name === evidenceName);
-            if (evidenceItem) {
-              ghost.evidenceIds.push(evidenceItem.id);
-            }
-          });
-          needsSaving = true;
-        }
-      });
-    }
-
-    // Migrate runs from evidence names to evidence IDs
-    if (data.runs && data.evidence) {
+    // Migration for run data - ensure players array format
+    if (data.runs && Array.isArray(data.runs)) {
       data.runs.forEach(run => {
-        if (run.evidence && !run.evidenceIds) {
-          run.evidenceIds = [];
-          run.evidence.forEach(evidenceName => {
-            const evidenceItem = data.evidence.find(e => e.name === evidenceName);
-            if (evidenceItem) {
-              run.evidenceIds.push(evidenceItem.id);
-            }
-          });
-          needsSaving = true;
+        // Migrate legacy player data
+        if (run.players && Array.isArray(run.players) && 
+            run.players.length > 0 && typeof run.players[0] === 'string') {
+          // Convert string array to object array with status
+          const playerStates = run.playerStates || {};
+          run.players = run.players.map(playerName => ({
+            id: this.getNextId([]), // Simple ID generation for migration
+            name: playerName,
+            status: playerStates[playerName] || 'alive'
+          }));
+          hasChanges = true;
+        }
+        
+        // Ensure evidence array exists
+        if (!run.evidence) {
+          run.evidence = [];
+          hasChanges = true;
+        }
+        
+        // Ensure cursed possessions array exists
+        if (!run.cursedPossessions) {
+          run.cursedPossessions = [];
+          hasChanges = true;
         }
       });
     }
 
-    if (needsSaving) {
+    // Migration for maps - ensure floors structure
+    if (data.maps && Array.isArray(data.maps)) {
+      data.maps.forEach(map => {
+        if (!map.floors && map.rooms && Array.isArray(map.rooms)) {
+          // Convert old room array to floors structure
+          map.floors = [
+            {
+              id: 1,
+              name: 'First Floor',
+              order: 0,
+              rooms: map.rooms.map((roomName, index) => ({
+                id: index + 1,
+                name: roomName
+              }))
+            }
+          ];
+          delete map.rooms; // Remove old rooms array
+          hasChanges = true;
+        }
+      });
+    }
+
+    // Save changes if any migrations occurred
+    if (hasChanges) {
       await this.saveData(data);
     }
   },
 
-  async saveData(data) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      dataCache = data;
-      await delay(50);
-    } catch (error) {
-      console.error('Error saving data:', error);
-      throw error;
-    }
-  },
-
-  getNextId(items) {
-    return Math.max(...items.map(item => item.id || 0), 0) + 1;
-  },
-
-  // Export/Import functionality
   async exportToFile(filename = 'phasmophobia-data.json') {
     const data = await this.loadData();
     const jsonString = JSON.stringify(data, null, 2);
@@ -149,7 +176,8 @@ export const baseService = {
             if (!data.cursedPossessions) data.cursedPossessions = [];
             if (!data.maps) data.maps = [];
             if (!data.ghosts) data.ghosts = [];
-            if (!data.mapCollections) data.mapCollections = []; // Ensure map collections exist
+            if (!data.mapCollections) data.mapCollections = [];
+            if (!data.challengeModes) data.challengeModes = []; // Ensure challenge modes exist
             
             await this.saveData(data);
             resolve(data);

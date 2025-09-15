@@ -10,12 +10,14 @@ import { runsService } from './api/runsService';
 import { evidenceService } from './api/evidenceService';
 import { cursedPossessionsService } from './api/cursedPossessionsService';
 import { mapCollectionsService } from './api/mapCollectionsService';
+import { challengeModesService } from './api/challengeModesService';
 
 export const dataService = {
   // Base operations
   exportToFile: baseService.exportToFile.bind(baseService),
   importFromFile: baseService.importFromFile.bind(baseService),
   clearCache: baseService.clearCache.bind(baseService),
+  getAllData: baseService.getAllData.bind(baseService),
 
   // Maps operations
   getMaps: mapsService.getMaps.bind(mapsService),
@@ -42,7 +44,7 @@ export const dataService = {
   deletePlayer: playersService.deletePlayer.bind(playersService),
   togglePlayerActive: playersService.togglePlayerActive.bind(playersService),
 
-  // Game modes operations
+  // Game Modes operations
   getGameModes: gameModesService.getGameModes.bind(gameModesService),
   getGameModeById: gameModesService.getGameModeById.bind(gameModesService),
   getActiveGameModes: gameModesService.getActiveGameModes.bind(gameModesService),
@@ -60,7 +62,7 @@ export const dataService = {
   deleteEvidence: evidenceService.deleteEvidence.bind(evidenceService),
   toggleEvidenceActive: evidenceService.toggleEvidenceActive.bind(evidenceService),
 
-  // Cursed possessions operations
+  // Cursed Possessions operations
   getCursedPossessions: cursedPossessionsService.getCursedPossessions.bind(cursedPossessionsService),
   getCursedPossessionById: cursedPossessionsService.getCursedPossessionById.bind(cursedPossessionsService),
   getActiveCursedPossessions: cursedPossessionsService.getActiveCursedPossessions.bind(cursedPossessionsService),
@@ -69,7 +71,7 @@ export const dataService = {
   deleteCursedPossession: cursedPossessionsService.deleteCursedPossession.bind(cursedPossessionsService),
   toggleCursedPossessionActive: cursedPossessionsService.toggleCursedPossessionActive.bind(cursedPossessionsService),
 
-  // Map collections operations
+  // Map Collections operations
   getMapCollections: mapCollectionsService.getMapCollections.bind(mapCollectionsService),
   getMapCollectionById: mapCollectionsService.getMapCollectionById.bind(mapCollectionsService),
   getActiveMapCollections: mapCollectionsService.getActiveMapCollections.bind(mapCollectionsService),
@@ -77,38 +79,18 @@ export const dataService = {
   updateMapCollection: mapCollectionsService.updateMapCollection.bind(mapCollectionsService),
   deleteMapCollection: mapCollectionsService.deleteMapCollection.bind(mapCollectionsService),
   toggleMapCollectionActive: mapCollectionsService.toggleMapCollectionActive.bind(mapCollectionsService),
-  getMapsInCollection: mapCollectionsService.getMapsInCollection.bind(mapCollectionsService),
-  getIndividualMaps: mapCollectionsService.getIndividualMaps.bind(mapCollectionsService),
-  isMapInCollection: mapCollectionsService.isMapInCollection.bind(mapCollectionsService),
-  getCollectionForMap: mapCollectionsService.getCollectionForMap.bind(mapCollectionsService),
+
+  // Challenge Modes operations
+  getChallengeModes: challengeModesService.getChallengeModes.bind(challengeModesService),
+  getChallenageModeById: challengeModesService.getChallengeModeById.bind(challengeModesService),
+  createChallengeMode: challengeModesService.createChallengeMode.bind(challengeModesService),
+  updateChallengeMode: challengeModesService.updateChallengeMode.bind(challengeModesService),
+  deleteChallengeMode: challengeModesService.deleteChallengeMode.bind(challengeModesService),
 
   // Runs operations
   getRuns: runsService.getRuns.bind(runsService),
   getRunById: runsService.getRunById.bind(runsService),
-  getRunsByDate: runsService.getRunsByDate.bind(runsService),
-  getRunsByDateAndPlayerCount: runsService.getRunsByDateAndPlayerCount.bind(runsService),
-  getTodaysRunNumber: runsService.getTodaysRunNumber.bind(runsService),
   createRun: runsService.createRun.bind(runsService),
   updateRun: runsService.updateRun.bind(runsService),
-  deleteRun: runsService.deleteRun.bind(runsService),
-
-  // Utility functions for backward compatibility
-  async getAllData() {
-    const data = await baseService.loadData();
-    return {
-      maps: [...data.maps],
-      ghosts: [...data.ghosts],
-      runs: [...data.runs],
-      players: [...data.players],
-      gameModes: [...data.gameModes],
-      evidence: [...data.evidence],
-      cursedPossessions: [...data.cursedPossessions],
-      mapCollections: [...data.mapCollections]
-    };
-  },
-
-  async getTodaysRuns() {
-    const today = new Date().toISOString().split('T')[0];
-    return await runsService.getRunsByDate(today);
-  }
+  deleteRun: runsService.deleteRun.bind(runsService)
 };

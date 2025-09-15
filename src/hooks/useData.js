@@ -10,6 +10,7 @@ export const useData = () => {
   const [evidence, setEvidence] = useState([]);
   const [cursedPossessions, setCursedPossessions] = useState([]);
   const [mapCollections, setMapCollections] = useState([]);
+  const [challengeModes, setChallengeModes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,7 +19,17 @@ export const useData = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [mapsData, ghostsData, runsData, playersData, gameModesData, evidenceData, cursedPossessionsData, mapCollectionsData] = await Promise.all([
+        const [
+          mapsData, 
+          ghostsData, 
+          runsData, 
+          playersData, 
+          gameModesData, 
+          evidenceData, 
+          cursedPossessionsData, 
+          mapCollectionsData, 
+          challengeModesData
+        ] = await Promise.all([
           dataService.getMaps(),
           dataService.getGhosts(),
           dataService.getRuns(),
@@ -26,7 +37,8 @@ export const useData = () => {
           dataService.getGameModes(),
           dataService.getEvidence(),
           dataService.getCursedPossessions(),
-          dataService.getMapCollections()
+          dataService.getMapCollections(),
+          dataService.getChallengeModes()
         ]);
         setMaps(mapsData);
         setGhosts(ghostsData);
@@ -36,6 +48,7 @@ export const useData = () => {
         setEvidence(evidenceData);
         setCursedPossessions(cursedPossessionsData);
         setMapCollections(mapCollectionsData);
+        setChallengeModes(challengeModesData);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -73,6 +86,16 @@ export const useData = () => {
     }
   };
 
+  const deleteMap = async (id) => {
+    try {
+      await dataService.deleteMap(id);
+      setMaps(prevMaps => prevMaps.filter(map => map.id !== id));
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   const toggleMapArchived = async (id) => {
     try {
       const updatedMap = await dataService.toggleMapArchived(id);
@@ -80,18 +103,6 @@ export const useData = () => {
         map.id === id ? updatedMap : map
       ));
       return updatedMap;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  };
-
-  const deleteMap = async (id) => {
-    try {
-      await dataService.deleteMap(id);
-      setMaps(prevMaps => prevMaps.filter(map => map.id !== id));
-      setGhosts(prevGhosts => prevGhosts.filter(ghost => ghost.mapId !== id));
-      setRuns(prevRuns => prevRuns.filter(run => run.mapId !== id));
     } catch (err) {
       setError(err.message);
       throw err;
@@ -127,7 +138,6 @@ export const useData = () => {
     try {
       await dataService.deleteGhost(id);
       setGhosts(prevGhosts => prevGhosts.filter(ghost => ghost.id !== id));
-      setRuns(prevRuns => prevRuns.filter(run => run.ghostId !== id));
     } catch (err) {
       setError(err.message);
       throw err;
@@ -259,13 +269,6 @@ export const useData = () => {
     try {
       await dataService.deleteEvidence(id);
       setEvidence(prevEvidence => prevEvidence.filter(evidence => evidence.id !== id));
-      // Reload ghosts and runs as they may have been updated
-      const [updatedGhosts, updatedRuns] = await Promise.all([
-        dataService.getGhosts(),
-        dataService.getRuns()
-      ]);
-      setGhosts(updatedGhosts);
-      setRuns(updatedRuns);
     } catch (err) {
       setError(err.message);
       throw err;
@@ -381,6 +384,41 @@ export const useData = () => {
     }
   };
 
+  // Challenge Modes operations
+  const createChallengeMode = async (challengeModeData) => {
+    try {
+      const newChallengeMode = await dataService.createChallengeMode(challengeModeData);
+      setChallengeModes(prevChallengeModes => [...prevChallengeModes, newChallengeMode]);
+      return newChallengeMode;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const updateChallengeMode = async (id, challengeModeData) => {
+    try {
+      const updatedChallengeMode = await dataService.updateChallengeMode(id, challengeModeData);
+      setChallengeModes(prevChallengeModes => prevChallengeModes.map(challengeMode => 
+        challengeMode.id === id ? updatedChallengeMode : challengeMode
+      ));
+      return updatedChallengeMode;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const deleteChallengeMode = async (id) => {
+    try {
+      await dataService.deleteChallengeMode(id);
+      setChallengeModes(prevChallengeModes => prevChallengeModes.filter(challengeMode => challengeMode.id !== id));
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   // Runs operations
   const createRun = async (runData) => {
     try {
@@ -440,6 +478,7 @@ export const useData = () => {
     evidence,
     cursedPossessions,
     mapCollections,
+    challengeModes,
     loading,
     error,
     
@@ -483,6 +522,11 @@ export const useData = () => {
     updateMapCollection,
     deleteMapCollection,
     toggleMapCollectionActive,
+
+    // Challenge Modes operations
+    createChallengeMode,
+    updateChallengeMode,
+    deleteChallengeMode,
 
     // Runs operations
     createRun,

@@ -17,7 +17,7 @@ const Layout = () => {
   const [activeTab, setActiveTab] = useState('list');
   
   useEffect(() => {
-    document.title = 'Phasmophobia Runs';
+    document.title = 'Phasmophobia Run Tracker';
   }, []);
   
   const renderContent = () => {

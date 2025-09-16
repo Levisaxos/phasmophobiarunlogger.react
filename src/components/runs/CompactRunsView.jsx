@@ -119,23 +119,22 @@ const CompactRunsView = ({
 
   if (runs.length === 0) {
     return (
-      <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-        <p className="text-gray-300 text-lg">No runs found matching your filters.</p>
-        <p className="text-gray-500 text-sm mt-2">Try adjusting your search criteria or add some runs!</p>
+      <div className="flex-1 bg-gray-700 rounded-lg shadow flex items-center justify-center">
+        <p className="text-gray-300 text-lg">No runs match the selected filters</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 bg-gray-700 rounded-lg shadow flex flex-col h-full">
+      <div className="p-4 border-b border-gray-600 flex-shrink-0">
         <h3 className="text-lg font-semibold text-gray-100">
           Runs ({runs.length})
         </h3>
       </div>
-      
-      <div className="space-y-3">
-        {runs.map((run) => {
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-4 space-y-4">
+          {runs.map((run) => {
           try {
               const { map, ghost, actualGhost, gameMode, challengeMode, cursedPossession, roomName, evidenceNames } = getRunDetails(run);
               
@@ -196,15 +195,16 @@ const CompactRunsView = ({
                         
                         <div>
                           <span className="text-gray-400 text-sm">Difficulty:</span>
-                          <div className="text-orange-300 mt-1">{gameMode?.name || 'Unknown'}
-                            {challengeMode && (
-                            <span> - {challengeMode.name}</span>
-                        )}
-                          </div>
-                          
+                          <div className="text-orange-300 mt-1">{gameMode?.name || 'Unknown'}</div>
                         </div>
                         
-                        
+                        {/* Challenge Mode Display */}
+                        {challengeMode && (
+                          <div>
+                            <span className="text-gray-400 text-sm">Challenge Mode:</span>
+                            <div className="text-orange-400 font-medium mt-1">{challengeMode.name}</div>
+                          </div>
+                        )}
                         
                         <div>
                           <span className="text-gray-400 text-sm">Perfect:</span>
@@ -275,6 +275,7 @@ const CompactRunsView = ({
           })}
         </div>
       </div>
+    </div>
   );
 };
 

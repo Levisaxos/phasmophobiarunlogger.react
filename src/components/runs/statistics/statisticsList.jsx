@@ -127,21 +127,7 @@ const StatisticsList = ({
             Select Statistics
           </button>
         </div>
-      )}
-
-      {/* Show available vs selected count */}
-      {selectedStats.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-gray-600">
-          <div className="text-xs text-gray-400 text-center">
-            Showing {selectedStats.length} of {AVAILABLE_STATISTICS.length} available statistics
-            {selectedStats.length < maxStats && (
-              <span className="ml-2">
-                ({maxStats - selectedStats.length} more can be added)
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+      )}     
 
       {/* Configuration Modal */}
       <StatisticsModal

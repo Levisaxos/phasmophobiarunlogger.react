@@ -288,14 +288,7 @@ const AddRun = () => {
                   availableMaps={maps}
                   selectedMap={selectedCollectionMap}
                   onMapChange={setSelectedCollectionMap}
-                />
-                {/* Show auto-selection indicator for challenge modes */}
-                {sessionData.challengeMode && selectedCollectionMap && (
-                  <p className="mt-1 text-xs text-blue-400 flex items-center gap-1">
-                    <span>🎯</span>
-                    <span>Auto-selected by challenge mode</span>
-                  </p>
-                )}
+                />                               
               </div>
             )}
 
@@ -346,19 +339,35 @@ const AddRun = () => {
           </div>
         </div>
 
-        {/* Evidence Section */}
-        <EvidenceSelector
-          availableEvidence={availableEvidence}
-          selectedEvidenceIds={selectedEvidenceIds}
-          excludedEvidenceIds={excludedEvidenceIds}
-          onEvidenceToggle={handleEvidenceToggle}
-          onEvidenceExclude={handleEvidenceExclude}
-          maxEvidence={maxEvidence}
-        />
+        {/* Cursed Possession and Evidence Section - Side by Side */}
+        <div className="flex gap-6">
+          {/* Cursed Possession Section - Left (50%) */}
+          <div className="flex-1">
+            <CursedPossessionSelector
+              cursedPossessions={availableCursedPossessions}
+              selectedCursedPossession={selectedCursedPossession}
+              onCursedPossessionChange={handleCursedPossessionChange}
+            />
+          </div>
+
+          {/* Evidence Section - Right (50%) */}
+          <div className="flex-1">
+            <EvidenceSelector
+              evidence={availableEvidence}
+              selectedEvidenceIds={selectedEvidenceIds}
+              excludedEvidenceIds={excludedEvidenceIds}
+              onEvidenceToggle={handleEvidenceToggle}
+              onEvidenceExclude={handleEvidenceExclude}
+              maxEvidence={maxEvidence}
+              ghosts={ghosts}
+            />
+          </div>
+        </div>
 
         {/* Ghost Selection Section */}
         <GhostSelector
           ghosts={ghosts}
+          evidence={availableEvidence}
           selectedGhost={selectedGhost}
           actualGhost={actualGhost}
           excludedGhosts={excludedGhosts}
@@ -369,16 +378,9 @@ const AddRun = () => {
           excludedEvidenceIds={excludedEvidenceIds}
         />
 
-        {/* Cursed Possession Section */}
-        <CursedPossessionSelector
-          availableCursedPossessions={availableCursedPossessions}
-          selectedCursedPossession={selectedCursedPossession}
-          onCursedPossessionChange={handleCursedPossessionChange}
-        />
-
         {/* Player Status Section */}
         <PlayerStatus
-          sessionData={sessionData}
+          todaysPlayers={sessionData.players}
           playerStates={playerStates}
           onPlayerStatusToggle={handlePlayerStatusToggle}
         />

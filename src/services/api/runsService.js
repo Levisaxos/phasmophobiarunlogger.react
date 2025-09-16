@@ -1,4 +1,4 @@
-// src/services/api/runsService.js - Updated with timer support
+// src/services/api/runsService.js - Updated with timer support and challenge mode support
 import { baseService } from './baseService';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -65,6 +65,7 @@ export const runsService = {
       cursedPossessionId: runData.cursedPossessionId || null,
       evidenceIds: runData.evidenceIds || [],
       gameModeId: runData.gameModeId || null,
+      challengeModeId: runData.challengeModeId || null, // Add challenge mode ID support
       
       // Ghost identification
       ghostId: runData.ghostId,

@@ -1,4 +1,4 @@
-// hooks/useAddRunForm.js - Updated with improved auto-selection handling
+// hooks/useAddRunForm.js - Updated with improved auto-selection handling and challenge mode support
 import { useState, useEffect } from 'react';
 
 export const useAddRunForm = () => {
@@ -139,30 +139,45 @@ export const useAddRunForm = () => {
   };
 
   // Create normalized run data for saving
-  const createRunData = (allPlayers, sessionData, selectedGameModeObj, selectedCursedPossessionObj) => {
+  const createRunData = ({
+    sessionData,
+    map,
+    selectedFloor,
+    selectedRoom,
+    selectedCursedPossessionObj,
+    selectedEvidenceIds,
+    excludedEvidenceIds,
+    selectedGhost,
+    actualGhost,
+    excludedGhosts,
+    playerStates,
+    isPerfectGame,
+    currentRunTime
+  }) => {
     const finalActualGhost = actualGhost || selectedGhost;
     
     // Convert player names to player data with status
     const playersData = todaysPlayers.map(playerName => {
-      const player = allPlayers.find(p => p.name === playerName);
+      const player = todaysPlayers.find(p => p === playerName);
       return {
-        id: player?.id || null,
+        id: null, // We don't have player IDs in this structure
         name: playerName,
         status: playerStates[playerName] || 'alive'
       };
     });
 
     return {
-      // Core identifiers (IDs only) - use session data
-      mapId: sessionData?.map?.id || null,
+      // Core identifiers (IDs only) - use session data and map parameter
+      mapId: map?.id || null,
       floorId: selectedFloor?.id || null,
       roomId: selectedRoom?.id || null,
       roomName: selectedRoom?.name || null,
-      cursedPossessionId: selectedCursedPossession || null,
+      cursedPossessionId: selectedCursedPossessionObj?.id || null,
       evidenceIds: [...selectedEvidenceIds],
       ghostId: selectedGhost?.id || null,
       actualGhostId: finalActualGhost?.id || null,
       gameModeId: sessionData?.gameMode?.id || null,
+      challengeModeId: sessionData?.challengeMode?.id || null, // Add challenge mode ID if present
       
       // Player data with embedded status
       players: playersData,
@@ -170,6 +185,9 @@ export const useAddRunForm = () => {
       // Game outcome (only meaningful if both ghosts are selected)
       wasCorrect: selectedGhost && finalActualGhost ? selectedGhost.id === finalActualGhost.id : null,
       isPerfectGame: isPerfectGame,
+      
+      // Timer data
+      runTimeSeconds: currentRunTime || null,
       
       // Timestamp (date will be derived from this)
       timestamp: new Date().toISOString()

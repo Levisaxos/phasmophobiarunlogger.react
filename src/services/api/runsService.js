@@ -3,7 +3,7 @@ import { baseService } from './baseService';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const runsService = {
+export const runsService = {  
   async getRuns() {
     await delay(100);
     const data = await baseService.loadData();
@@ -37,19 +37,23 @@ export const runsService = {
       .map(run => this.enrichRunData(run));
   },
 
-  async getTodaysRunNumber(playerCount) {
-    const today = new Date().toISOString().split('T')[0];
-    const todaysRuns = await this.getRunsByDateAndPlayerCount(today, playerCount);
-    return todaysRuns.length + 1;
+  async getNextRunNumber() {
+    await delay(50);
+    const data = await baseService.loadData();
+    if (!data.runs || data.runs.length === 0) {
+      return 1;
+    }
+    // Find the highest existing run number and add 1
+    const maxRunNumber = Math.max(...data.runs.map(run => run.runNumber || 0));
+    return maxRunNumber + 1;
   },
 
   async createRun(runData) {
     await delay(100);
     const data = await baseService.loadData();
     
-    // Calculate player count for run numbering
-    const playerCount = runData.players ? runData.players.length : 0;
-    const runNumber = await this.getTodaysRunNumber(playerCount);
+    // Get next incremental run number
+    const runNumber = await this.getNextRunNumber();
     
     // Store only essential data - no redundant fields
     const cleanRunData = {

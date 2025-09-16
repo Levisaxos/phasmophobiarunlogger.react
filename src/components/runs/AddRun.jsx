@@ -6,6 +6,8 @@ import { useToast } from '../../hooks/useToast';
 import Timer from '../common/Timer';
 import SessionSetup from '../session/SessionSetup';
 
+
+
 // Import from AddRun subdirectory
 import CursedPossessionSelector from './CursedPossessionSelector';
 import EvidenceSelector from './EvidenceSelector';
@@ -269,7 +271,7 @@ const AddRun = () => {
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 text-sm"
           >
             End Session
-          </button>
+          </button>          
         </div>
       </div>
 

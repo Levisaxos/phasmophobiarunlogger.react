@@ -1,4 +1,4 @@
-// services/dataService.js
+// src/services/dataService.js - Fixed typo in challenge modes
 // Main entry point that combines all services for backward compatibility
 
 import { baseService } from './api/baseService';
@@ -38,7 +38,6 @@ export const dataService = {
   // Players operations
   getPlayers: playersService.getPlayers.bind(playersService),
   getPlayerById: playersService.getPlayerById.bind(playersService),
-  getActivePlayers: playersService.getActivePlayers.bind(playersService),
   createPlayer: playersService.createPlayer.bind(playersService),
   updatePlayer: playersService.updatePlayer.bind(playersService),
   deletePlayer: playersService.deletePlayer.bind(playersService),
@@ -47,7 +46,6 @@ export const dataService = {
   // Game Modes operations
   getGameModes: gameModesService.getGameModes.bind(gameModesService),
   getGameModeById: gameModesService.getGameModeById.bind(gameModesService),
-  getActiveGameModes: gameModesService.getActiveGameModes.bind(gameModesService),
   createGameMode: gameModesService.createGameMode.bind(gameModesService),
   updateGameMode: gameModesService.updateGameMode.bind(gameModesService),
   deleteGameMode: gameModesService.deleteGameMode.bind(gameModesService),
@@ -56,7 +54,6 @@ export const dataService = {
   // Evidence operations
   getEvidence: evidenceService.getEvidence.bind(evidenceService),
   getEvidenceById: evidenceService.getEvidenceById.bind(evidenceService),
-  getActiveEvidence: evidenceService.getActiveEvidence.bind(evidenceService),
   createEvidence: evidenceService.createEvidence.bind(evidenceService),
   updateEvidence: evidenceService.updateEvidence.bind(evidenceService),
   deleteEvidence: evidenceService.deleteEvidence.bind(evidenceService),
@@ -65,7 +62,6 @@ export const dataService = {
   // Cursed Possessions operations
   getCursedPossessions: cursedPossessionsService.getCursedPossessions.bind(cursedPossessionsService),
   getCursedPossessionById: cursedPossessionsService.getCursedPossessionById.bind(cursedPossessionsService),
-  getActiveCursedPossessions: cursedPossessionsService.getActiveCursedPossessions.bind(cursedPossessionsService),
   createCursedPossession: cursedPossessionsService.createCursedPossession.bind(cursedPossessionsService),
   updateCursedPossession: cursedPossessionsService.updateCursedPossession.bind(cursedPossessionsService),
   deleteCursedPossession: cursedPossessionsService.deleteCursedPossession.bind(cursedPossessionsService),
@@ -80,9 +76,9 @@ export const dataService = {
   deleteMapCollection: mapCollectionsService.deleteMapCollection.bind(mapCollectionsService),
   toggleMapCollectionActive: mapCollectionsService.toggleMapCollectionActive.bind(mapCollectionsService),
 
-  // Challenge Modes operations
+  // Challenge Modes operations - FIXED TYPO
   getChallengeModes: challengeModesService.getChallengeModes.bind(challengeModesService),
-  getChallenageModeById: challengeModesService.getChallengeModeById.bind(challengeModesService),
+  getChallengeModeById: challengeModesService.getChallengeModeById.bind(challengeModesService), // Fixed: was getChallenageModeById
   createChallengeMode: challengeModesService.createChallengeMode.bind(challengeModesService),
   updateChallengeMode: challengeModesService.updateChallengeMode.bind(challengeModesService),
   deleteChallengeMode: challengeModesService.deleteChallengeMode.bind(challengeModesService),

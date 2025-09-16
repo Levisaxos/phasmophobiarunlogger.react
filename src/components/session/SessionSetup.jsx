@@ -1,4 +1,4 @@
-// src/components/session/SessionSetup.jsx - Refactored with challenge modes
+// src/components/session/SessionSetup.jsx - Auto-select challenge mode maps (Fixed imports)
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 import PlayersSection from './PlayersSection';
@@ -30,6 +30,33 @@ const SessionSetup = ({ onStartSession, initialData }) => {
 
   // Check if selected game mode is Challenge Mode (id: 6)
   const isChallengeModeSelected = selectedGameMode === 6;
+
+  // Auto-select map/mapCollection when challenge mode is selected
+  useEffect(() => {
+    if (selectedChallengeMode && availableChallengeModes.length > 0) {
+      const challengeModeObj = availableChallengeModes.find(cm => cm.id === selectedChallengeMode);
+      if (challengeModeObj) {
+        // Check if challenge mode has a mapCollectionId first (prioritize collections)
+        if (challengeModeObj.mapCollectionId) {
+          // Auto-select map collection
+          const mapCollection = allMapCollections.find(mc => mc.id === challengeModeObj.mapCollectionId);
+          if (mapCollection) {
+            setSelectedMapCollection(mapCollection);
+            setSelectedMap(null);
+            console.log('Auto-selected map collection:', mapCollection.name);
+          }
+        } else if (challengeModeObj.mapId) {
+          // Auto-select individual map
+          const map = allMaps.find(m => m.id === challengeModeObj.mapId);
+          if (map) {
+            setSelectedMap(map);
+            setSelectedMapCollection(null);
+            console.log('Auto-selected individual map:', map.name);
+          }
+        }
+      }
+    }
+  }, [selectedChallengeMode, availableChallengeModes, allMaps, allMapCollections]);
 
   // Initialize from saved preferences or initial data
   useEffect(() => {
@@ -77,6 +104,8 @@ const SessionSetup = ({ onStartSession, initialData }) => {
   useEffect(() => {
     if (!isChallengeModeSelected) {
       setSelectedChallengeMode(null);
+      // Don't auto-clear map selection when switching away from challenge mode
+      // as user might want to keep their manual selection
     }
   }, [isChallengeModeSelected]);
 
@@ -102,6 +131,11 @@ const SessionSetup = ({ onStartSession, initialData }) => {
       setSelectedMapCollection(entry);
       setSelectedMap(null);
     }
+  };
+
+  const handleChallengeModeChange = (challengeModeId) => {
+    setSelectedChallengeMode(challengeModeId);
+    // Map auto-selection will be handled by the useEffect above
   };
 
   const handleStartSession = () => {
@@ -185,7 +219,7 @@ const SessionSetup = ({ onStartSession, initialData }) => {
           isChallengeModeSelected={isChallengeModeSelected}
           availableChallengeModes={availableChallengeModes}
           selectedChallengeMode={selectedChallengeMode}
-          onChallengeModeChange={setSelectedChallengeMode}
+          onChallengeModeChange={handleChallengeModeChange}
         />
 
         {/* Map Selection Section */}

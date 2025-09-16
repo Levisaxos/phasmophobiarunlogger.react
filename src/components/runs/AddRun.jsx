@@ -1,4 +1,4 @@
-// src/components/runs/AddRun.jsx - Fixed to properly return to session setup
+// src/components/runs/AddRun.jsx - Auto-select collection wing for challenge modes
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
@@ -93,6 +93,23 @@ const AddRun = () => {
     }
   }, [maxEvidence, selectedEvidenceIds.length, setSelectedEvidenceIds]);
 
+  // Auto-select collection map for challenge modes when session starts
+  useEffect(() => {
+    if (sessionData?.mapCollection && sessionData?.challengeMode?.mapCollectionId && !selectedCollectionMap) {
+      // This is a challenge mode with a map collection - auto-select the first map
+      const collectionMaps = maps.filter(map => 
+        sessionData.mapCollection.mapIds.includes(map.id)
+      );
+      
+      if (collectionMaps.length > 0) {
+        // Auto-select the first map in the collection (sorted by name)
+        const sortedMaps = [...collectionMaps].sort((a, b) => a.name.localeCompare(b.name));
+        console.log('Auto-selecting wing/map for challenge mode:', sortedMaps[0].name);
+        setSelectedCollectionMap(sortedMaps[0]);
+      }
+    }
+  }, [sessionData, maps, selectedCollectionMap]);
+
   const handleStartSession = (newSessionData) => {
     setSessionData(newSessionData);
     setSessionStartTime(Date.now());
@@ -115,6 +132,7 @@ const AddRun = () => {
     setSessionData(prev => prev ? ({
       players: prev.players,
       gameMode: prev.gameMode,
+      challengeMode: prev.challengeMode, // Keep challenge mode too
       map: null,           // Clear individual map
       mapCollection: null  // Clear map collection
     }) : null);
@@ -150,38 +168,30 @@ const AddRun = () => {
     setIsSaving(true);
 
     try {
-      const selectedCursedPossessionObj = selectedCursedPossession ?
-        availableCursedPossessions.find(p => p.id === selectedCursedPossession) : null;
+      const selectedCursedPossessionObj = selectedCursedPossession 
+        ? availableCursedPossessions.find(p => p.id === selectedCursedPossession)
+        : null;
 
-      // Create session data with the actual selected map
-      const sessionDataWithActualMap = {
-        ...sessionData,
-        map: actualMap
-      };
-
-      // Create normalized run data with session information
-      const baseRunData = createRunData(allPlayers, sessionDataWithActualMap, sessionData.gameMode, selectedCursedPossessionObj);
-      
-      // Override with session data
-      const runData = {
-        ...baseRunData,
-        players: sessionData.players.map(playerName => {
-          const player = allPlayers.find(p => p.name === playerName);
-          return {
-            id: player?.id || null,
-            name: playerName,
-            status: playerStates[playerName] || 'alive'
-          };
-        }),
-        runTimeSeconds: currentRunTime // Add run time to the data
-      };
+      const runData = createRunData({
+        sessionData,
+        map: actualMap, // Use the actual selected map
+        selectedFloor,
+        selectedRoom,
+        selectedCursedPossessionObj,
+        selectedEvidenceIds,
+        excludedEvidenceIds, 
+        selectedGhost,
+        actualGhost,
+        excludedGhosts,
+        playerStates,
+        isPerfectGame,
+        currentRunTime
+      });
 
       const newRun = await createRun(runData);
-      
-      // FIXED: Always end the run and go back to session setup regardless of map type
-      handleEndRun();
+      resetForm();
 
-      success(`Run saved successfully! Run #${newRun.runNumber} for ${sessionData.players.length} player${sessionData.players.length > 1 ? 's' : ''} today. Time: ${formatTime(currentRunTime)}`);
+      success(`Run #${newRun.runNumber} for ${sessionData.players.length} player${sessionData.players.length > 1 ? 's' : ''} today. Time: ${formatTime(currentRunTime)}`);
 
     } catch (err) {
       console.error('Error saving run:', err);
@@ -237,9 +247,21 @@ const AddRun = () => {
                 ? `${sessionData.mapCollection.name} - ${sessionData.gameMode.name}`
                 : `${sessionData.map.name} - ${sessionData.gameMode.name}`
               }
+              {/* Show challenge mode indicator */}
+              {sessionData.challengeMode && (
+                <span className="ml-2 text-orange-400 text-lg">
+                  🎯 {sessionData.challengeMode.name}
+                </span>
+              )}
             </h2>
             <p className="text-gray-400">
               Players: {sessionData.players.join(', ')} • Max {maxEvidence} evidence
+              {/* Show auto-selection info for challenge mode */}
+              {sessionData.challengeMode && sessionData.mapCollection && selectedCollectionMap && (
+                <span className="ml-2 text-blue-400">
+                  • Auto-selected: {selectedCollectionMap.name}
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -267,6 +289,13 @@ const AddRun = () => {
                   selectedMap={selectedCollectionMap}
                   onMapChange={setSelectedCollectionMap}
                 />
+                {/* Show auto-selection indicator for challenge modes */}
+                {sessionData.challengeMode && selectedCollectionMap && (
+                  <p className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                    <span>🎯</span>
+                    <span>Auto-selected by challenge mode</span>
+                  </p>
+                )}
               </div>
             )}
 
@@ -306,67 +335,70 @@ const AddRun = () => {
             </div>
 
             {/* Timer Display */}
-            <div className="w-32">
+            <div className="w-20">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Timer
               </label>
-              <div className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 h-[42px] flex items-center justify-center">
-                <div className="text-lg font-mono font-bold text-green-400">
-                  {formatTime(currentRunTime)}
-                </div>
+              <div className="py-2 px-3 bg-gray-800 border border-gray-500 rounded-md text-center text-gray-200 text-sm h-[42px] flex items-center justify-center">
+                {formatTime(currentRunTime)}
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Only show the rest of the form if we have a map selected */}
-        {(sessionData.map || selectedCollectionMap) && (
-          <>
-            <div className='flex flex-column justify-between gap-10'>
-              <CursedPossessionSelector
-                cursedPossessions={availableCursedPossessions}
-                selectedCursedPossession={selectedCursedPossession}
-                onCursedPossessionChange={handleCursedPossessionChange}
-              />
-              <EvidenceSelector
-                evidence={availableEvidence}
-                selectedEvidenceIds={selectedEvidenceIds}
-                excludedEvidenceIds={excludedEvidenceIds}
-                maxEvidence={maxEvidence}
-                onEvidenceToggle={handleEvidenceToggle}
-                onEvidenceExclude={handleEvidenceExclude}
-                ghosts={ghosts}
-              />
-            </div>
-            
-            <GhostSelector
-              ghosts={ghosts}
-              evidence={evidence}
-              selectedEvidenceIds={selectedEvidenceIds}
-              excludedEvidenceIds={excludedEvidenceIds}
-              selectedGhost={selectedGhost}
-              actualGhost={actualGhost}
-              excludedGhosts={excludedGhosts}
-              onGhostSelect={handleGhostSelect}
-              onActualGhostSelect={handleActualGhostSelect}
-              onGhostExclude={handleGhostExclude}
-            />
-            
-            <PlayerStatus
-              todaysPlayers={sessionData.players}
-              playerStates={playerStates}
-              onPlayerStatusToggle={handlePlayerStatusToggle}
-              onChangePlayersClick={() => {}} // Disabled during session
-            />
-          </>
-        )}
 
-        <div className="pt-4 border-t border-gray-600">
+        {/* Evidence Section */}
+        <EvidenceSelector
+          availableEvidence={availableEvidence}
+          selectedEvidenceIds={selectedEvidenceIds}
+          excludedEvidenceIds={excludedEvidenceIds}
+          onEvidenceToggle={handleEvidenceToggle}
+          onEvidenceExclude={handleEvidenceExclude}
+          maxEvidence={maxEvidence}
+        />
+
+        {/* Ghost Selection Section */}
+        <GhostSelector
+          ghosts={ghosts}
+          selectedGhost={selectedGhost}
+          actualGhost={actualGhost}
+          excludedGhosts={excludedGhosts}
+          onGhostSelect={handleGhostSelect}
+          onActualGhostSelect={handleActualGhostSelect}
+          onGhostExclude={handleGhostExclude}
+          selectedEvidenceIds={selectedEvidenceIds}
+          excludedEvidenceIds={excludedEvidenceIds}
+        />
+
+        {/* Cursed Possession Section */}
+        <CursedPossessionSelector
+          availableCursedPossessions={availableCursedPossessions}
+          selectedCursedPossession={selectedCursedPossession}
+          onCursedPossessionChange={handleCursedPossessionChange}
+        />
+
+        {/* Player Status Section */}
+        <PlayerStatus
+          sessionData={sessionData}
+          playerStates={playerStates}
+          onPlayerStatusToggle={handlePlayerStatusToggle}
+        />
+
+        {/* Submit Button and End Run */}
+        <div className="flex items-center justify-between pt-6 border-t border-gray-600">
+          <button
+            type="button"
+            onClick={handleEndRun}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200"
+          >
+            End Run
+          </button>
+
           <button
             type="submit"
             disabled={!canSubmit || isSaving}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+            className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2"
           >
+            <span className="text-xl">💾</span>
             {isSaving ? 'Saving Run...' : `Save Run (${formatTime(currentRunTime)})`}
           </button>
 

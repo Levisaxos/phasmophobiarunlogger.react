@@ -1,18 +1,21 @@
-// components/manage/ManageChallengeModes.jsx
+// src/components/manage/ManageChallengeModes.jsx - Enhanced with map collection support
 import React, { useState, useEffect } from 'react';
-import {  challengeModesService} from '../../services/api/challengeModesService'
- import { mapsService } from '../../services/api/mapsService';
-import  ManageLayout  from '../common/ManageLayout';
+import { challengeModesService } from '../../services/api/challengeModesService';
+import { mapsService } from '../../services/api/mapsService';
+import { dataService } from '../../services/dataService';
+import ManageLayout from '../common/ManageLayout';
 
 const ManageChallengeModes = () => {
   const [challengeModes, setChallengeModes] = useState([]);
   const [maps, setMaps] = useState([]);
+  const [mapCollections, setMapCollections] = useState([]);
   const [selectedChallengeMode, setSelectedChallengeMode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingChallengeMode, setEditingChallengeMode] = useState({
     name: '',
     description: '',
-    mapId: null
+    mapId: null,
+    mapCollectionId: null
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,12 +26,14 @@ const ManageChallengeModes = () => {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [challengeModesData, mapsData] = await Promise.all([
+      const [challengeModesData, mapsData, mapCollectionsData] = await Promise.all([
         challengeModesService.getChallengeModes(),
-        mapsService.getActiveMaps()
+        mapsService.getActiveMaps(),
+        dataService.getActiveMapCollections()
       ]);
       setChallengeModes(challengeModesData);
       setMaps(mapsData);
+      setMapCollections(mapCollectionsData);
     } catch (err) {
       console.error('Error loading data:', err);
       alert('Error loading data: ' + err.message);
@@ -41,7 +46,8 @@ const ManageChallengeModes = () => {
     setEditingChallengeMode({
       name: '',
       description: '',
-      mapId: null
+      mapId: null,
+      mapCollectionId: null
     });
     setSelectedChallengeMode(null);
     setIsEditing(true);
@@ -51,7 +57,8 @@ const ManageChallengeModes = () => {
     setEditingChallengeMode({
       name: challengeMode.name,
       description: challengeMode.description || '',
-      mapId: challengeMode.mapId || null
+      mapId: challengeMode.mapId || null,
+      mapCollectionId: challengeMode.mapCollectionId || null
     });
     setSelectedChallengeMode(challengeMode);
     setIsEditing(true);
@@ -63,8 +70,17 @@ const ManageChallengeModes = () => {
       return;
     }
 
-    if (!editingChallengeMode.mapId) {
-      alert('Please select a map for the challenge mode');
+    // Must have either a map or map collection, but not both
+    const hasMap = editingChallengeMode.mapId;
+    const hasMapCollection = editingChallengeMode.mapCollectionId;
+    
+    if (!hasMap && !hasMapCollection) {
+      alert('Please select either a map or a map collection for the challenge mode');
+      return;
+    }
+    
+    if (hasMap && hasMapCollection) {
+      alert('Please select either a map OR a map collection, not both');
       return;
     }
 
@@ -72,7 +88,8 @@ const ManageChallengeModes = () => {
       const challengeModeData = {
         name: editingChallengeMode.name.trim(),
         description: editingChallengeMode.description.trim(),
-        mapId: parseInt(editingChallengeMode.mapId)
+        mapId: editingChallengeMode.mapId ? parseInt(editingChallengeMode.mapId) : null,
+        mapCollectionId: editingChallengeMode.mapCollectionId ? parseInt(editingChallengeMode.mapCollectionId) : null
       };
 
       if (selectedChallengeMode) {
@@ -110,7 +127,8 @@ const ManageChallengeModes = () => {
     setEditingChallengeMode({
       name: '',
       description: '',
-      mapId: null
+      mapId: null,
+      mapCollectionId: null
     });
   };
 
@@ -119,12 +137,56 @@ const ManageChallengeModes = () => {
     return map ? map.name : 'Unknown Map';
   };
 
+  const getMapCollectionName = (mapCollectionId) => {
+    const mapCollection = mapCollections.find(mc => mc.id === mapCollectionId);
+    return mapCollection ? mapCollection.name : 'Unknown Collection';
+  };
+
+  const handleMapSelectionChange = (e) => {
+    const value = e.target.value;
+    if (value.startsWith('map-')) {
+      const mapId = parseInt(value.replace('map-', ''));
+      setEditingChallengeMode({
+        ...editingChallengeMode,
+        mapId: mapId,
+        mapCollectionId: null
+      });
+    } else if (value.startsWith('collection-')) {
+      const mapCollectionId = parseInt(value.replace('collection-', ''));
+      setEditingChallengeMode({
+        ...editingChallengeMode,
+        mapId: null,
+        mapCollectionId: mapCollectionId
+      });
+    } else {
+      setEditingChallengeMode({
+        ...editingChallengeMode,
+        mapId: null,
+        mapCollectionId: null
+      });
+    }
+  };
+
+  const getSelectedValue = () => {
+    if (editingChallengeMode.mapId) {
+      return `map-${editingChallengeMode.mapId}`;
+    } else if (editingChallengeMode.mapCollectionId) {
+      return `collection-${editingChallengeMode.mapCollectionId}`;
+    }
+    return '';
+  };
+
   const renderListItem = (challengeMode) => (
     <div className="flex items-center justify-between">
       <div>
         <div className="font-medium">{challengeMode.name}</div>
         <div className="text-xs text-gray-400">
-          Map: {getMapName(challengeMode.mapId)}
+          {challengeMode.mapId 
+            ? `Map: ${getMapName(challengeMode.mapId)}`
+            : challengeMode.mapCollectionId
+            ? `Collection: ${getMapCollectionName(challengeMode.mapCollectionId)} 📁`
+            : 'No map assigned'
+          }
         </div>
       </div>
     </div>
@@ -188,30 +250,54 @@ const ManageChallengeModes = () => {
             </div>
 
             <div>
-              <label htmlFor="challengeModeMap" className="block text-sm font-medium text-gray-300 mb-2">
-                Map *
+              <label htmlFor="challengeModeMapSelection" className="block text-sm font-medium text-gray-300 mb-2">
+                Map or Map Collection *
               </label>
               <select
-                id="challengeModeMap"
-                value={editingChallengeMode.mapId || ''}
-                onChange={(e) => setEditingChallengeMode({
-                  ...editingChallengeMode,
-                  mapId: e.target.value ? parseInt(e.target.value) : null
-                })}
+                id="challengeModeMapSelection"
+                value={getSelectedValue()}
+                onChange={handleMapSelectionChange}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
-                <option value="">Select a map...</option>
-                {maps.map((map) => (
-                  <option key={map.id} value={map.id}>
-                    {map.name} ({map.size})
-                  </option>
-                ))}
+                <option value="">Select a map or map collection...</option>
+                
+                {/* Individual Maps */}
+                {maps.length > 0 && (
+                  <optgroup label="Individual Maps">
+                    {maps.map((map) => (
+                      <option key={`map-${map.id}`} value={`map-${map.id}`}>
+                        {map.name} ({map.size})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                
+                {/* Map Collections */}
+                {mapCollections.length > 0 && (
+                  <optgroup label="Map Collections">
+                    {mapCollections.map((collection) => (
+                      <option key={`collection-${collection.id}`} value={`collection-${collection.id}`}>
+                        📁 {collection.name} ({collection.mapIds?.length || 0} {collection.selectionLabel?.toLowerCase() || 'map'}s)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
-              {maps.length === 0 && (
+              
+              {maps.length === 0 && mapCollections.length === 0 && (
                 <p className="text-sm text-yellow-400 mt-1">
-                  No maps available. Please create maps first in Manage → Maps.
+                  No maps or map collections available. Please create them first in Manage → Maps or Manage → Map Collections.
                 </p>
               )}
+              
+              {/* Info about selection */}
+              <div className="mt-2 p-3 bg-blue-900/20 border border-blue-600/30 rounded-md">
+                <h4 className="text-sm font-medium text-blue-300 mb-1">Selection Info:</h4>
+                <ul className="text-xs text-blue-200 space-y-1">
+                  <li>• <strong>Individual Map:</strong> Always uses the same specific map</li>
+                  <li>• <strong>Map Collection:</strong> Auto-selects the collection, then auto-selects the first map/wing when starting a run</li>
+                </ul>
+              </div>
             </div>
           </div>
 

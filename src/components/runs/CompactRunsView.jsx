@@ -1,4 +1,4 @@
-// src/components/runs/CompactRunsView.jsx - Improved 3-column layout with colors and vertical dividers
+// src/components/runs/CompactRunsView.jsx - Improved 3-column layout with colors and vertical dividers and challenge mode support
 import React from 'react';
 import { getRoomName, getEvidenceNames } from '../../utils/formatUtils';
 
@@ -8,6 +8,7 @@ const CompactRunsView = ({
   ghosts,
   evidence,
   gameModes,
+  challengeModes,
   cursedPossessions
 }) => {
   // Format date to compact format (e.g., "Mo 01-01-25")
@@ -27,13 +28,14 @@ const CompactRunsView = ({
     const ghost = ghosts.find(g => g.id === run.ghostId);
     const actualGhost = ghosts.find(g => g.id === run.actualGhostId);
     const gameMode = gameModes.find(gm => gm.id === run.gameModeId);
+    const challengeMode = challengeModes.find(cm => cm.id === run.challengeModeId);
     const cursedPossession = run.cursedPossessionId ? 
       cursedPossessions.find(p => p.id === run.cursedPossessionId) : null;
     
     const roomName = getRoomName(run, map);
     const evidenceNames = getEvidenceNames(run.evidenceIds || [], evidence);
     
-    return { map, ghost, actualGhost, gameMode, cursedPossession, roomName, evidenceNames };
+    return { map, ghost, actualGhost, gameMode, challengeMode, cursedPossession, roomName, evidenceNames };
   };
 
   // Format players with status - colorful styling
@@ -74,11 +76,11 @@ const CompactRunsView = ({
               key={`player-${index}-${player.name}`}
               className={`px-2 py-1 text-xs border rounded ${
                 isAlive 
-                  ? 'bg-green-600/20 text-green-300 border-green-600/30' 
-                  : 'bg-red-600/20 text-red-300 border-red-600/30'
+                  ? 'bg-green-600/20 border-green-500/50 text-green-300' 
+                  : 'bg-red-600/20 border-red-500/50 text-red-300'
               }`}
             >
-              {player.name}{isAlive ? '' : ' 💀'}
+              {player.name}
             </span>
           );
         })}
@@ -86,52 +88,56 @@ const CompactRunsView = ({
     );
   };
 
-  // Format ghost display - inline with colors
+  // Format ghost display - showing guessed vs actual
   const formatGhostDisplay = (ghost, actualGhost, wasCorrect) => {
-    if (!ghost && !actualGhost) {
-      return <span className="text-gray-300">Unknown Ghost</span>;
+    const guessedName = ghost?.name || 'None';
+    const actualName = actualGhost?.name || 'Unknown';
+    
+    if (guessedName === 'None' && actualName === 'Unknown') {
+      return <span className="text-gray-300">Not recorded</span>;
     }
-
-    if (wasCorrect || !ghost || ghost.id === actualGhost?.id) {
-      const displayGhost = actualGhost || ghost;
-      return (
-        <div className="flex items-center gap-2">
-          <span className="text-green-400">✓</span>
-          <span className="text-green-300">{displayGhost.name || 'Unknown Ghost'}</span>
+    
+    const correctIcon = wasCorrect ? '✅' : '❌';
+    const correctColor = wasCorrect ? 'text-green-400' : 'text-red-400';
+    
+    return (
+      <div className="space-y-1">
+        <div className="text-gray-300">
+          <span className="text-gray-400">Guessed:</span> {guessedName}
         </div>
-      );
-    } else {
-      return (
-        <div className="flex items-center gap-2">
-          <span className="text-red-400">✗</span>
-          <span className="text-red-400 line-through">{ghost.name}</span>
-          <span className="text-gray-400">→</span>
-          <span className="text-green-300">{actualGhost?.name || 'Unknown Ghost'}</span>
+        <div className="text-white">
+          <span className="text-gray-400">Actual:</span> {actualName}
         </div>
-      );
-    }
+        {wasCorrect !== null && (
+          <div className={`text-sm ${correctColor}`}>
+            {correctIcon} {wasCorrect ? 'Correct' : 'Wrong'}
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (runs.length === 0) {
     return (
-      <div className="flex-1 bg-gray-700 rounded-lg shadow flex items-center justify-center">
-        <p className="text-gray-300 text-lg">No runs match the selected filters</p>
+      <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+        <p className="text-gray-300 text-lg">No runs found matching your filters.</p>
+        <p className="text-gray-500 text-sm mt-2">Try adjusting your search criteria or add some runs!</p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-gray-700 rounded-lg shadow flex flex-col h-full">
-      <div className="p-4 border-b border-gray-600 flex-shrink-0">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-100">
           Runs ({runs.length})
         </h3>
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="p-4 space-y-4">
-          {runs.map((run) => {
-            try {
-              const { map, ghost, actualGhost, gameMode, cursedPossession, roomName, evidenceNames } = getRunDetails(run);
+      
+      <div className="space-y-3">
+        {runs.map((run) => {
+          try {
+              const { map, ghost, actualGhost, gameMode, challengeMode, cursedPossession, roomName, evidenceNames } = getRunDetails(run);
               
               return (
                 <div
@@ -190,8 +196,15 @@ const CompactRunsView = ({
                         
                         <div>
                           <span className="text-gray-400 text-sm">Difficulty:</span>
-                          <div className="text-orange-300 mt-1">{gameMode?.name || 'Unknown'}</div>
+                          <div className="text-orange-300 mt-1">{gameMode?.name || 'Unknown'}
+                            {challengeMode && (
+                            <span> - {challengeMode.name}</span>
+                        )}
+                          </div>
+                          
                         </div>
+                        
+                        
                         
                         <div>
                           <span className="text-gray-400 text-sm">Perfect:</span>
@@ -262,7 +275,6 @@ const CompactRunsView = ({
           })}
         </div>
       </div>
-    </div>
   );
 };
 

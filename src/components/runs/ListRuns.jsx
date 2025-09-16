@@ -1,5 +1,5 @@
 // === UPDATED LISTRUNS COMPONENT ===
-// src/components/runs/ListRuns.jsx - Updated with better toggle placement
+// src/components/runs/ListRuns.jsx - Updated with better toggle placement and challenge mode support
 
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
@@ -14,7 +14,8 @@ const ListRuns = () => {
     ghosts, 
     runs, 
     evidence, 
-    gameModes, 
+    gameModes,
+    challengeModes,
     cursedPossessions, 
     loading, 
     error 
@@ -118,6 +119,7 @@ const ListRuns = () => {
             ghosts={ghosts}
             evidence={evidence}
             gameModes={gameModes}
+            challengeModes={challengeModes}
             cursedPossessions={cursedPossessions}
           />
         </div>

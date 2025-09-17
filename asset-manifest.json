@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/phasmophobiarunlogger.react/static/css/main.cead68f3.css",
-    "main.js": "/phasmophobiarunlogger.react/static/js/main.ce8f3723.js",
+    "main.js": "/phasmophobiarunlogger.react/static/js/main.a4198ab3.js",
     "static/js/453.673fab4c.chunk.js": "/phasmophobiarunlogger.react/static/js/453.673fab4c.chunk.js",
     "index.html": "/phasmophobiarunlogger.react/index.html",
     "main.cead68f3.css.map": "/phasmophobiarunlogger.react/static/css/main.cead68f3.css.map",
-    "main.ce8f3723.js.map": "/phasmophobiarunlogger.react/static/js/main.ce8f3723.js.map",
+    "main.a4198ab3.js.map": "/phasmophobiarunlogger.react/static/js/main.a4198ab3.js.map",
     "453.673fab4c.chunk.js.map": "/phasmophobiarunlogger.react/static/js/453.673fab4c.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.cead68f3.css",
-    "static/js/main.ce8f3723.js"
+    "static/js/main.a4198ab3.js"
   ]
 }

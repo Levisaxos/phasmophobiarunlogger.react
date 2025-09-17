@@ -168,10 +168,10 @@ const SessionSetup = ({ onStartSession, initialData }) => {
     onStartSession(sessionData);
   };
 
-  const canStartSession = (selectedMap || selectedMapCollection) && 
-                         selectedGameMode && 
-                         selectedPlayers.length > 0 &&
-                         (!isChallengeModeSelected || selectedChallengeMode);
+  const canStartSession = (selectedMap || selectedMapCollection) &&
+    selectedGameMode &&
+    selectedPlayers.length > 0 &&
+    (!isChallengeModeSelected || selectedChallengeMode);
 
   const selectedGameModeObj = selectedGameMode ? activeGameModes.find(gm => gm.id === selectedGameMode) : null;
 
@@ -198,8 +198,8 @@ const SessionSetup = ({ onStartSession, initialData }) => {
         <div className="mb-6 p-4 bg-blue-900/20 border border-blue-600/30 rounded-md">
           <h3 className="text-lg font-semibold text-blue-400 mb-2">🎯 Continue Session</h3>
           <p className="text-blue-300 text-sm">
-            Run completed! Your players and game mode have been preserved. 
-            {selectedMapCollection 
+            Run completed! Your players and game mode have been preserved.
+            {selectedMapCollection
               ? 'Select a new map to start your next run.'
               : 'Select a new map to start your next run.'
             }
@@ -249,46 +249,60 @@ const SessionSetup = ({ onStartSession, initialData }) => {
           )}
         </div>
 
-        {/* Start Session Button */}
+       /* Start Session Button */
         <div className="text-center pt-4 border-t border-gray-600">
-  <button
-    onClick={handleStartSession}
-    disabled={!canStartSession}
-    className={`px-6 py-3 font-semibold rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto ${
-      canStartSession 
-        ? 'bg-green-600 text-white hover:bg-green-700'
-        : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-    }`}
-  >
-    <span className="text-xl">🎯</span>
-    {initialData 
-      ? (canStartSession ? 'Start Next Run' : 'Complete Setup to Continue') 
-      : (canStartSession ? 'Start Session' : 'Complete Setup to Start')
-    }
-  </button>
-  
-  {!canStartSession && (
-    <div className="mt-3 p-3 bg-red-900/20 border border-red-600/30 rounded-md">
-      <p className="text-red-400 text-sm font-medium">
-        Cannot start session - missing required items:
-      </p>
-      <ul className="text-red-300 text-xs mt-2 space-y-1">
-        {selectedPlayers.length === 0 && (
-          <li>• ❌ At least 1 player must be selected</li>
-        )}
-        {!selectedGameMode && (
-          <li>• ❌ Game mode must be selected</li>
-        )}
-        {isChallengeModeSelected && !selectedChallengeMode && (
-          <li>• ❌ Challenge mode must be selected</li>
-        )}
-        {!selectedMap && !selectedMapCollection && (
-          <li>• ❌ Map or map collection must be selected</li>
-        )}
-      </ul>
-    </div>
-  )}
-</div>
+          <button
+            onClick={handleStartSession}
+            disabled={!canStartSession}
+            className={`px-6 py-3 font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto ${canStartSession
+                ? 'bg-green-600 text-white hover:bg-green-700 hover:scale-105 shadow-lg'
+                : 'bg-gray-500 text-gray-300 cursor-not-allowed opacity-50'
+              }`}
+          >
+            <span className="text-xl">🎯</span>
+            {initialData
+              ? (canStartSession ? 'Start Next Run' : 'Complete Setup to Continue')
+              : (canStartSession ? 'Start Session' : 'Complete Setup to Start')
+            }
+          </button>
+
+          {!canStartSession && (
+            <div className="mt-3 p-4 bg-red-900/20 border border-red-600/30 rounded-md max-w-md mx-auto">
+              <p className="text-red-400 text-sm font-medium mb-2">
+                ❌ Cannot start session - missing required items:
+              </p>
+              <ul className="text-red-300 text-sm space-y-1">
+                {selectedPlayers.length === 0 && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                    <strong>At least 1 player must be selected</strong>
+                  </li>
+                )}
+                {!selectedGameMode && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                    <strong>Game mode must be selected</strong>
+                  </li>
+                )}
+                {isChallengeModeSelected && !selectedChallengeMode && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                    <strong>Challenge mode must be selected</strong>
+                  </li>
+                )}
+                {!selectedMap && !selectedMapCollection && (
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                    <strong>Map or map collection must be selected</strong>
+                  </li>
+                )}
+              </ul>
+              <p className="text-red-400 text-xs mt-3 italic">
+                Complete all requirements above to start your ghost hunting session.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

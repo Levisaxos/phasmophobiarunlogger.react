@@ -50,11 +50,11 @@ const AddRun = () => {
     playerStates,
     isPerfectGame,
     isSaving,
-    
+
     // Setters
     setSelectedEvidenceIds,
     setIsSaving,
-    
+
     // Handlers - now includes floor handlers
     handleFloorChange,
     handleRoomChange,
@@ -67,7 +67,7 @@ const AddRun = () => {
     handlePlayerStatusToggle,
     handlePerfectGameToggle,
     resetForm,
-    
+
     // Data transformation
     createRunData
   } = useAddRunForm();
@@ -99,10 +99,10 @@ const AddRun = () => {
   useEffect(() => {
     if (sessionData?.mapCollection && sessionData?.challengeMode?.mapCollectionId && !selectedCollectionMap) {
       // This is a challenge mode with a map collection - auto-select the first map
-      const collectionMaps = maps.filter(map => 
+      const collectionMaps = maps.filter(map =>
         sessionData.mapCollection.mapIds.includes(map.id)
       );
-      
+
       if (collectionMaps.length > 0) {
         // Auto-select the first map in the collection (sorted by name)
         const sortedMaps = [...collectionMaps].sort((a, b) => a.name.localeCompare(b.name));
@@ -138,7 +138,7 @@ const AddRun = () => {
       map: null,           // Clear individual map
       mapCollection: null  // Clear map collection
     }) : null);
-    
+
     setSessionStartTime(null);
     setCurrentRunTime(0);
     setSelectedCollectionMap(null); // Clear selected collection map
@@ -160,7 +160,7 @@ const AddRun = () => {
     // For map collections, we need a selected map
     const actualMap = sessionData.mapCollection ? selectedCollectionMap : sessionData.map;
     if (!actualMap) {
-      warning(sessionData.mapCollection 
+      warning(sessionData.mapCollection
         ? `Please select a ${sessionData.mapCollection.selectionLabel.toLowerCase()} first`
         : 'No map selected for this session'
       );
@@ -170,7 +170,7 @@ const AddRun = () => {
     setIsSaving(true);
 
     try {
-      const selectedCursedPossessionObj = selectedCursedPossession 
+      const selectedCursedPossessionObj = selectedCursedPossession
         ? availableCursedPossessions.find(p => p.id === selectedCursedPossession)
         : null;
 
@@ -181,7 +181,7 @@ const AddRun = () => {
         selectedRoom,
         selectedCursedPossessionObj,
         selectedEvidenceIds,
-        excludedEvidenceIds, 
+        excludedEvidenceIds,
         selectedGhost,
         actualGhost,
         excludedGhosts,
@@ -245,13 +245,13 @@ const AddRun = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-100 mb-2">
-              🎮 {sessionData.mapCollection 
+              🎮 {sessionData.mapCollection
                 ? `${sessionData.mapCollection.name} - ${sessionData.gameMode.name}`
                 : `${sessionData.map.name} - ${sessionData.gameMode.name}`
               }
-             {/* Show challenge mode indicator with tooltip */}
+              {/* Show challenge mode indicator with tooltip */}
               {sessionData.challengeMode && (
-                <span 
+                <span
                   className="ml-2 text-orange-400 text-lg relative group cursor-help"
                   title={sessionData.challengeMode.description || 'No description available'}
                 >
@@ -284,7 +284,7 @@ const AddRun = () => {
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 text-sm"
           >
             End Session
-          </button>          
+          </button>
         </div>
       </div>
 
@@ -292,9 +292,8 @@ const AddRun = () => {
         {/* Floor/Room Selection and Wing Selection Row */}
         <div className="flex items-end gap-6">
           {/* Section 1: Wing, Floor, Room (dynamic grid based on presence of wing) */}
-          <div className={`flex-1 grid gap-4 items-end ${
-            sessionData.mapCollection ? 'grid-cols-3' : 'grid-cols-2'
-          }`}>
+          <div className={`flex-1 grid gap-4 items-end ${sessionData.mapCollection ? 'grid-cols-3' : 'grid-cols-2'
+            }`}>
             {/* Wing Selection (if using a collection) */}
             {sessionData.mapCollection && (
               <div>
@@ -303,7 +302,7 @@ const AddRun = () => {
                   availableMaps={maps}
                   selectedMap={selectedCollectionMap}
                   onMapChange={setSelectedCollectionMap}
-                />                               
+                />
               </div>
             )}
 
@@ -331,24 +330,36 @@ const AddRun = () => {
               <button
                 type="button"
                 onClick={() => handlePerfectGameToggle(!isPerfectGame)}
-                className={`w-full py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 h-[42px] ${
-                  isPerfectGame
+                className={`w-full py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 h-[42px] ${isPerfectGame
                     ? 'bg-yellow-600 text-white'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-600 border border-gray-500'
-                }`}
+                  }`}
               >
                 <span className="text-lg">{isPerfectGame ? '⭐' : '☆'}</span>
                 {isPerfectGame ? 'Yes' : 'No'}
               </button>
             </div>
 
-            {/* Timer Display */}
-            <div className="w-20">
+            {/* Timer Display - Enhanced */}
+            <div className="w-32">
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Timer
+                Session Timer
               </label>
-              <div className="py-2 px-3 bg-gray-800 border border-gray-500 rounded-md text-center text-gray-200 text-sm h-[42px] flex items-center justify-center">
-                {formatTime(currentRunTime)}
+              <div className="relative">
+                {/* Glowing border effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg blur-sm opacity-75"></div>
+                <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg p-3 text-center">
+                  <div className="text-xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400">
+                    {formatTime(currentRunTime)}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {currentRunTime > 0 ? 'ACTIVE' : 'STANDBY'}
+                  </div>
+                  {/* Pulse indicator for active timer */}
+                  {currentRunTime > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

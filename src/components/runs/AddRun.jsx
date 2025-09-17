@@ -249,10 +249,23 @@ const AddRun = () => {
                 ? `${sessionData.mapCollection.name} - ${sessionData.gameMode.name}`
                 : `${sessionData.map.name} - ${sessionData.gameMode.name}`
               }
-              {/* Show challenge mode indicator */}
+             {/* Show challenge mode indicator with tooltip */}
               {sessionData.challengeMode && (
-                <span className="ml-2 text-orange-400 text-lg">
+                <span 
+                  className="ml-2 text-orange-400 text-lg relative group cursor-help"
+                  title={sessionData.challengeMode.description || 'No description available'}
+                >
                   🎯 {sessionData.challengeMode.name}
+                  {/* Tooltip */}
+                  {sessionData.challengeMode.description && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap max-w-xs z-10">
+                      <div className="text-center">
+                        {sessionData.challengeMode.description}
+                      </div>
+                      {/* Tooltip arrow */}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                    </div>
+                  )}
                 </span>
               )}
             </h2>

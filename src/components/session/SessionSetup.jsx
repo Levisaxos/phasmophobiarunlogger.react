@@ -1,4 +1,4 @@
-// src/components/session/SessionSetup.jsx - Auto-select challenge mode maps (Fixed imports)
+// src/components/session/SessionSetup.jsx - Auto-select challenge mode maps (Fixed imports) with map disabling
 import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 import PlayersSection from './PlayersSection';
@@ -30,6 +30,9 @@ const SessionSetup = ({ onStartSession, initialData }) => {
 
   // Check if selected game mode is Challenge Mode (id: 6)
   const isChallengeModeSelected = selectedGameMode === 6;
+
+  // Determine if map selection should be disabled (when challenge mode is selected)
+  const isMapSelectionDisabled = isChallengeModeSelected && selectedChallengeMode;
 
   // Auto-select map/mapCollection when challenge mode is selected
   useEffect(() => {
@@ -124,6 +127,11 @@ const SessionSetup = ({ onStartSession, initialData }) => {
   };
 
   const handleMapEntrySelect = (entry) => {
+    // Don't allow map selection if challenge mode is active
+    if (isMapSelectionDisabled) {
+      return;
+    }
+
     if (entry.type === 'map') {
       setSelectedMap(entry);
       setSelectedMapCollection(null);
@@ -223,13 +231,23 @@ const SessionSetup = ({ onStartSession, initialData }) => {
         />
 
         {/* Map Selection Section */}
-        <MapSelectionSection
-          maps={allMaps}
-          mapCollections={allMapCollections}
-          selectedMap={selectedMap}
-          selectedMapCollection={selectedMapCollection}
-          onMapEntrySelect={handleMapEntrySelect}
-        />
+        <div className={isMapSelectionDisabled ? 'opacity-50 pointer-events-none' : ''}>
+          <MapSelectionSection
+            maps={allMaps}
+            mapCollections={allMapCollections}
+            selectedMap={selectedMap}
+            selectedMapCollection={selectedMapCollection}
+            onMapEntrySelect={handleMapEntrySelect}
+          />
+          {isMapSelectionDisabled && (
+            <div className="mt-2 p-3 bg-orange-900/20 border border-orange-600/30 rounded-md">
+              <p className="text-orange-300 text-sm flex items-center gap-2">
+                <span>🎯</span>
+                <span>Map selection is disabled because this challenge mode has a preset map.</span>
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Start Session Button */}
         <div className="text-center pt-4 border-t border-gray-600">

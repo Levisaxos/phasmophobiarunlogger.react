@@ -29,19 +29,19 @@ const CompactRunsView = ({
     const actualGhost = ghosts.find(g => g.id === run.actualGhostId);
     const gameMode = gameModes.find(gm => gm.id === run.gameModeId);
     const challengeMode = challengeModes.find(cm => cm.id === run.challengeModeId);
-    const cursedPossession = run.cursedPossessionId ? 
+    const cursedPossession = run.cursedPossessionId ?
       cursedPossessions.find(p => p.id === run.cursedPossessionId) : null;
-    
+
     const roomName = getRoomName(run, map);
     const evidenceNames = getEvidenceNames(run.evidenceIds || [], evidence);
-    
+
     return { map, ghost, actualGhost, gameMode, challengeMode, cursedPossession, roomName, evidenceNames };
   };
 
   // Format players with status - colorful styling
   const formatPlayersWithStatus = (run) => {
     let playersData = [];
-    
+
     if (run.players && Array.isArray(run.players) && run.players.length > 0) {
       if (typeof run.players[0] === 'object' && run.players[0].name) {
         playersData = run.players.map(player => ({
@@ -66,19 +66,18 @@ const CompactRunsView = ({
     if (playersData.length === 0) {
       return <span className="text-gray-300">No players</span>;
     }
-    
+
     return (
       <div className="flex flex-wrap gap-1">
         {playersData.map((player, index) => {
           const isAlive = player.status === 'alive';
           return (
-            <span 
+            <span
               key={`player-${index}-${player.name}`}
-              className={`px-2 py-1 text-xs border rounded ${
-                isAlive 
-                  ? 'bg-green-600/20 border-green-500/50 text-green-300' 
-                  : 'bg-red-600/20 border-red-500/50 text-red-300'
-              }`}
+              className={`px-2 py-1 text-xs border rounded ${isAlive
+                ? 'bg-green-600/20 border-green-500/50 text-green-300'
+                : 'bg-red-600/20 border-red-500/50 text-red-300'
+                }`}
             >
               {player.name}
             </span>
@@ -92,27 +91,19 @@ const CompactRunsView = ({
   const formatGhostDisplay = (ghost, actualGhost, wasCorrect) => {
     const guessedName = ghost?.name || 'None';
     const actualName = actualGhost?.name || 'Unknown';
-    
+
     if (guessedName === 'None' && actualName === 'Unknown') {
       return <span className="text-gray-300">Not recorded</span>;
     }
-    
+
     const correctIcon = wasCorrect ? '✅' : '❌';
     const correctColor = wasCorrect ? 'text-green-400' : 'text-red-400';
-    
+
     return (
       <div className="space-y-1">
         <div className="text-gray-300">
-          <span className="text-gray-400">Guessed:</span> {guessedName}
+          <span className>Guessed:</span> <span className={wasCorrect != null && wasCorrect ? `text-green-400` : `line-through text-red-400`}> {guessedName}</span> {wasCorrect != null && !wasCorrect && (<span className='text-green-400' >{actualName}</span>)}
         </div>
-        <div className="text-white">
-          <span className="text-gray-400">Actual:</span> {actualName}
-        </div>
-        {wasCorrect !== null && (
-          <div className={`text-sm ${correctColor}`}>
-            {correctIcon} {wasCorrect ? 'Correct' : 'Wrong'}
-          </div>
-        )}
       </div>
     );
   };
@@ -135,9 +126,9 @@ const CompactRunsView = ({
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="p-4 space-y-4">
           {runs.map((run) => {
-          try {
+            try {
               const { map, ghost, actualGhost, gameMode, challengeMode, cursedPossession, roomName, evidenceNames } = getRunDetails(run);
-              
+
               return (
                 <div
                   key={`run-${run.id}`}
@@ -145,31 +136,31 @@ const CompactRunsView = ({
                 >
                   {/* 3-Column Grid Layout with Vertical Dividers */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-                    
+
                     {/* Column 1: Run Information */}
                     <div className="p-3 lg:border-r border-gray-600">
                       <h4 className="text-sm font-medium text-blue-400 mb-3 border-b border-gray-600 pb-2">
                         Run Information
                       </h4>
-                      
+
                       <div className="space-y-2">
                         <div>
                           <span className="text-gray-400 text-sm">Run:</span>
                           <span className="text-white font-medium ml-2">#{run.runNumber}</span>
                         </div>
-                        
+
                         <div>
                           <span className="text-gray-400 text-sm">Date:</span>
                           <span className="text-white ml-2">{formatCompactDate(run.date)}</span>
                         </div>
-                        
+
                         {run.formattedRunTime && (
                           <div>
                             <span className="text-gray-400 text-sm">Time:</span>
                             <span className="text-blue-300 font-mono ml-2">{run.formattedRunTime}</span>
                           </div>
                         )}
-                        
+
                         <div>
                           <span className="text-gray-400 text-sm">Players:</span>
                           <div className="mt-1">
@@ -184,7 +175,7 @@ const CompactRunsView = ({
                       <h4 className="text-sm font-medium text-orange-400 mb-3 border-b border-gray-600 pb-2">
                         Game Setup
                       </h4>
-                      
+
                       <div className="space-y-2">
                         <div>
                           <span className="text-gray-400 text-sm">Location:</span>
@@ -192,12 +183,12 @@ const CompactRunsView = ({
                             {map?.name || 'Unknown Map'} - <span className="text-gray-300">{roomName}</span>
                           </div>
                         </div>
-                        
+
                         <div>
                           <span className="text-gray-400 text-sm">Difficulty:</span>
                           <div className="text-orange-300 mt-1">{gameMode?.name || 'Unknown'}</div>
                         </div>
-                        
+
                         {/* Challenge Mode Display */}
                         {challengeMode && (
                           <div>
@@ -205,7 +196,7 @@ const CompactRunsView = ({
                             <div className="text-orange-400 font-medium mt-1">{challengeMode.name}</div>
                           </div>
                         )}
-                        
+
                         <div>
                           <span className="text-gray-400 text-sm">Perfect:</span>
                           <div className="mt-1">
@@ -224,7 +215,7 @@ const CompactRunsView = ({
                       <h4 className="text-sm font-medium text-green-400 mb-3 border-b border-gray-600 pb-2">
                         Results
                       </h4>
-                      
+
                       <div className="space-y-2">
                         <div>
                           <span className="text-gray-400 text-sm">Ghost:</span>
@@ -232,7 +223,7 @@ const CompactRunsView = ({
                             {formatGhostDisplay(ghost, actualGhost, run.wasCorrect)}
                           </div>
                         </div>
-                        
+
                         <div>
                           <span className="text-gray-400 text-sm">Evidence:</span>
                           <div className="mt-1">
@@ -252,13 +243,20 @@ const CompactRunsView = ({
                             )}
                           </div>
                         </div>
-                        
-                        {cursedPossession && (
-                          <div>
-                            <span className="text-gray-400 text-sm">Cursed Item:</span>
-                            <div className="text-purple-300 mt-1">🔮 {cursedPossession.name}</div>
+
+
+                        <div>
+                          <span className="text-gray-400 text-sm">Cursed Item:</span>
+                          <div className='mt-1'>
+                            {cursedPossession ? (
+                              <div className="text-purple-300 mt-1">🔮 {cursedPossession.name}</div>
+                            ) :
+                              (
+                                <span className="text-gray-300 text-sm">Not found</span>
+                              )
+                            }
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,10 +1,12 @@
-// components/common/Layout.jsx
+// src/components/common/Layout.jsx
 import React, { useState, useEffect } from 'react';
-import  Navigation  from './Navigation';
+import Navigation from './Navigation';
+import Footer from './Footer';
+import DisclaimerModal from '../modals/DisclaimerModal';
 
 // Import from organized folders
-import  ListRuns from '../runs/ListRuns';
-import  AddRun from  '../runs/AddRun';
+import ListRuns from '../runs/ListRuns';
+import AddRun from '../runs/AddRun';
 import ManageMaps from '../manage/ManageMaps';
 import ManageGhosts from '../manage/ManageGhosts';
 import ManageEvidence from '../manage/ManageEvidence';
@@ -15,10 +17,22 @@ import ManageChallengeModes from '../manage/ManageChallengeModes';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('list');
+  const [showInitialDisclaimer, setShowInitialDisclaimer] = useState(false);
   
   useEffect(() => {
     document.title = 'Phasmophobia Run Tracker';
+    
+    // Check if user has seen the disclaimer before
+    const hasSeenDisclaimer = localStorage.getItem('phasmophobia-disclaimer-seen');
+    if (!hasSeenDisclaimer) {
+      setShowInitialDisclaimer(true);
+    }
   }, []);
+
+  const handleDisclaimerClose = () => {
+    setShowInitialDisclaimer(false);
+    localStorage.setItem('phasmophobia-disclaimer-seen', 'true');
+  };
   
   const renderContent = () => {
     switch (activeTab) {
@@ -46,11 +60,19 @@ const Layout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 flex flex-col">
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
+      
+      <main className="flex-1 w-full py-6 px-4 sm:px-6 lg:px-8">
         {renderContent()}
       </main>
+      
+      <Footer />
+      
+      <DisclaimerModal 
+        isOpen={showInitialDisclaimer} 
+        onClose={handleDisclaimerClose} 
+      />
     </div>
   );
 };

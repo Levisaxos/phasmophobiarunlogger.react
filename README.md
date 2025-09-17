@@ -1,70 +1,131 @@
-# Getting Started with Create React App
+# Phasmophobia Run Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A personal React application for tracking Phasmophobia game runs and analyzing statistics with friends.
 
-## Available Scripts
+## 🎯 Purpose
 
-In the project directory, you can run:
+This is a personal project created to track and analyze Phasmophobia gaming sessions. I enjoy collecting statistics from our games and wanted a simple way to store and visualize our progress over time.
 
-### `npm start`
+## 🚀 Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Track game runs with detailed information
+- Manage maps, ghosts, evidence, and cursed possessions
+- Player management and statistics
+- Local data storage (no external servers)
+- Export/import functionality for data backup
+- Responsive design for desktop and mobile
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🛠️ Technology Stack
 
-### `npm test`
+- **Frontend:** React 18 with functional components and hooks
+- **Styling:** Tailwind CSS
+- **Storage:** Browser localStorage
+- **Deployment:** GitHub Pages
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 📦 Installation & Setup
 
-### `npm run build`
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Levisaxos/phasmophobiarunlogger.react
+   cd phasmophobia-run-tracker
+   ```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. **Start development server:**
+   ```bash
+   npm start
+   ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+4. **Build for production:**
+   ```bash
+   npm run build
+   ```
 
-### `npm run eject`
+## 🚀 Deployment to GitHub Pages
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Automatic Deployment (Recommended)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The repository includes a GitHub Actions workflow that automatically deploys to GitHub Pages when you push to the main branch.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. **Enable GitHub Pages:**
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Set source to "GitHub Actions"
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. **Update repository URLs:**
+   - Replace `yourusername` in `package.json` homepage with your GitHub username
+   - Update the repository URL in the Footer component
 
-## Learn More
+3. **Push to main branch:**
+   ```bash
+   git add .
+   git commit -m "Add GitHub Pages deployment"
+   git push origin main
+   ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Manual Deployment
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+If you prefer manual deployment:
 
-### Code Splitting
+1. **Install gh-pages:**
+   ```bash
+   npm install --save-dev gh-pages
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+2. **Deploy:**
+   ```bash
+   npm run deploy
+   ```
 
-### Analyzing the Bundle Size
+## 📁 Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
+src/
+├── components/
+│   ├── common/          # Shared components (Navigation, Layout, Footer)
+│   ├── modals/          # Modal components
+│   ├── manage/          # Management components for game data
+│   └── runs/            # Run tracking components
+├── services/
+│   └── api/             # Data service layer
+└── hooks/               # Custom React hooks
+```
 
-### Making a Progressive Web App
+## 🎮 Usage
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. **First-time setup:** Configure your maps, ghosts, evidence types, and players
+2. **Add runs:** Record your game sessions with detailed information
+3. **View statistics:** Analyze your gaming patterns and success rates
+4. **Export data:** Backup your data as JSON files
+5. **Import data:** Restore from backup files
 
-### Advanced Configuration
+## 📄 Data Storage
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- All data is stored locally in your browser's localStorage
+- No data is sent to external servers
+- Use the export feature to backup your data regularly
 
-### Deployment
+## ⚖️ License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/licenses/MIT) file for details.
 
-### `npm run build` fails to minify
+## 🚨 Disclaimer
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is **not affiliated with, endorsed by, or connected to Kinetic Games**, the creator of Phasmophobia. Phasmophobia is a trademark of Kinetic Games. This is an independent fan project created for personal use and statistics tracking.
+
+## 🤝 Contributing
+
+This is a personal project, but if you find bugs or have suggestions, feel free to open an issue on GitHub.
+
+## 📞 Contact
+
+- GitHub: [@Levisaxos](https://github.com/Levisaxos)
+- Project: [Phasmophobia Run Tracker](https://github.com/Levisaxos/phasmophobiarunlogger.react)
+
+---
+
+*Made with ❤️ for the Phasmophobia community*

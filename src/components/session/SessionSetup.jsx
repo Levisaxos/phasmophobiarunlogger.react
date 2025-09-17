@@ -251,27 +251,44 @@ const SessionSetup = ({ onStartSession, initialData }) => {
 
         {/* Start Session Button */}
         <div className="text-center pt-4 border-t border-gray-600">
-          <button
-            onClick={handleStartSession}
-            disabled={!canStartSession}
-            className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2 mx-auto"
-          >
-            <span className="text-xl">🎯</span>
-            {initialData 
-              ? (canStartSession ? 'Start Next Run' : 'Select Map to Continue') 
-              : (canStartSession ? 'Start Session' : 'Complete Setup to Start')
-            }
-          </button>
-          
-          {!canStartSession && (
-            <p className="mt-2 text-xs text-gray-400">
-              {initialData 
-                ? 'Please select a map to start your next run'
-                : `Please select players, difficulty${isChallengeModeSelected ? ', challenge mode' : ''}, and map to start your session`
-              }
-            </p>
-          )}
-        </div>
+  <button
+    onClick={handleStartSession}
+    disabled={!canStartSession}
+    className={`px-6 py-3 font-semibold rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto ${
+      canStartSession 
+        ? 'bg-green-600 text-white hover:bg-green-700'
+        : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+    }`}
+  >
+    <span className="text-xl">🎯</span>
+    {initialData 
+      ? (canStartSession ? 'Start Next Run' : 'Complete Setup to Continue') 
+      : (canStartSession ? 'Start Session' : 'Complete Setup to Start')
+    }
+  </button>
+  
+  {!canStartSession && (
+    <div className="mt-3 p-3 bg-red-900/20 border border-red-600/30 rounded-md">
+      <p className="text-red-400 text-sm font-medium">
+        Cannot start session - missing required items:
+      </p>
+      <ul className="text-red-300 text-xs mt-2 space-y-1">
+        {selectedPlayers.length === 0 && (
+          <li>• ❌ At least 1 player must be selected</li>
+        )}
+        {!selectedGameMode && (
+          <li>• ❌ Game mode must be selected</li>
+        )}
+        {isChallengeModeSelected && !selectedChallengeMode && (
+          <li>• ❌ Challenge mode must be selected</li>
+        )}
+        {!selectedMap && !selectedMapCollection && (
+          <li>• ❌ Map or map collection must be selected</li>
+        )}
+      </ul>
+    </div>
+  )}
+</div>
       </div>
     </div>
   );

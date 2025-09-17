@@ -1,6 +1,8 @@
 {
   "name": "phasmophobiarunlogger",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Personal project for tracking Phasmophobia game runs and statistics",
+  "homepage": "https://levisaxos.github.io/phasmophobiarunlogger.react",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -13,10 +15,16 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "npm run set-build-info && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+    "set-build-info": "node scripts/set-build-info.js",
+    "version:patch": "npm version patch && git push --follow-tags",
+    "version:minor": "npm version minor && git push --follow-tags",
+    "version:major": "npm version major && git push --follow-tags"
   },
   "eslintConfig": {
     "extends": [
@@ -35,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }

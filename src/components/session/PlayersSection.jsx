@@ -8,15 +8,31 @@ const PlayersSection = ({
 }) => {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-100 mb-3">Players ({selectedPlayers.length})</h3>
+      <h3 className="text-lg font-semibold text-gray-100 mb-3">
+        Players ({selectedPlayers.length}) 
+        <span className="text-red-400 ml-1">*</span>
+        {selectedPlayers.length === 0 && (
+          <span className="text-red-400 text-sm font-normal ml-2">- At least 1 player required</span>
+        )}
+      </h3>
       
       {activePlayers.length === 0 ? (
-        <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-md p-3">
-          <p className="text-yellow-400 text-sm">
-            No active players configured. Please go to Manage → Players to add players first.
+        <div className="bg-red-900/20 border border-red-600/30 rounded-md p-4">
+          <p className="text-red-400 text-sm">
+            ❌ <strong>No active players configured.</strong> Please go to <strong>Manage → Players</strong> to add players first.
+            <br />
+            <span className="text-red-300 text-xs mt-1 block">You cannot start a session without at least one player.</span>
           </p>
         </div>
-      ) : (
+      ) : selectedPlayers.length === 0 ? (
+        <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-md p-4 mb-4">
+          <p className="text-yellow-400 text-sm">
+            ⚠️ <strong>No players selected.</strong> Please select at least one player to start your session.
+          </p>
+        </div>
+      ) : null}
+
+      {activePlayers.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
           {activePlayers.map((player) => {
             const isSelected = selectedPlayers.includes(player.name);
@@ -32,6 +48,7 @@ const PlayersSection = ({
                     ? 'bg-blue-600 text-white border-2 border-blue-500'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-600 border-2 border-gray-600'
                 } ${isLastSelected ? 'opacity-75 cursor-not-allowed' : ''}`}
+                title={isLastSelected ? 'Cannot remove the last player - at least one player is required' : ''}
               >
                 <div className={`w-3 h-3 rounded border flex items-center justify-center ${
                   isSelected ? 'bg-white border-white' : 'border-gray-400'
@@ -48,6 +65,16 @@ const PlayersSection = ({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Additional help text when players are selected */}
+      {selectedPlayers.length > 0 && (
+        <div className="mt-3 p-2 bg-blue-900/20 border border-blue-600/30 rounded-md">
+          <p className="text-blue-300 text-xs">
+            ✓ {selectedPlayers.length} player{selectedPlayers.length > 1 ? 's' : ''} selected. 
+            {selectedPlayers.length === 1 ? ' You cannot remove the last player.' : ' Click players to add/remove from session.'}
+          </p>
         </div>
       )}
     </div>

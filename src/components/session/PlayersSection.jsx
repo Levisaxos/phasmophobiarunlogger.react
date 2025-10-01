@@ -66,17 +66,7 @@ const PlayersSection = ({
             );
           })}
         </div>
-      )}
-
-      {/* Additional help text when players are selected */}
-      {selectedPlayers.length > 0 && (
-        <div className="mt-3 p-2 bg-blue-900/20 border border-blue-600/30 rounded-md">
-          <p className="text-blue-300 text-xs">
-            ✓ {selectedPlayers.length} player{selectedPlayers.length > 1 ? 's' : ''} selected. 
-            {selectedPlayers.length === 1 ? ' You cannot remove the last player.' : ' Click players to add/remove from session.'}
-          </p>
-        </div>
-      )}
+      )}   
     </div>
   );
 };

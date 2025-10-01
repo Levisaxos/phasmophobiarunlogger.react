@@ -248,8 +248,7 @@ const SessionSetup = ({ onStartSession, initialData }) => {
             </div>
           )}
         </div>
-
-       /* Start Session Button */
+       
         <div className="text-center pt-4 border-t border-gray-600">
           <button
             onClick={handleStartSession}
@@ -265,43 +264,6 @@ const SessionSetup = ({ onStartSession, initialData }) => {
               : (canStartSession ? 'Start Session' : 'Complete Setup to Start')
             }
           </button>
-
-          {!canStartSession && (
-            <div className="mt-3 p-4 bg-red-900/20 border border-red-600/30 rounded-md max-w-md mx-auto">
-              <p className="text-red-400 text-sm font-medium mb-2">
-                ❌ Cannot start session - missing required items:
-              </p>
-              <ul className="text-red-300 text-sm space-y-1">
-                {selectedPlayers.length === 0 && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                    <strong>At least 1 player must be selected</strong>
-                  </li>
-                )}
-                {!selectedGameMode && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                    <strong>Game mode must be selected</strong>
-                  </li>
-                )}
-                {isChallengeModeSelected && !selectedChallengeMode && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                    <strong>Challenge mode must be selected</strong>
-                  </li>
-                )}
-                {!selectedMap && !selectedMapCollection && (
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                    <strong>Map or map collection must be selected</strong>
-                  </li>
-                )}
-              </ul>
-              <p className="text-red-400 text-xs mt-3 italic">
-                Complete all requirements above to start your ghost hunting session.
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

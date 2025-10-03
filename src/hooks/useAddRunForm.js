@@ -157,8 +157,8 @@ export const useAddRunForm = () => {
     const finalActualGhost = actualGhost || selectedGhost;
     
     // Convert player names to player data with status
-    const playersData = todaysPlayers.map(playerName => {
-      const player = todaysPlayers.find(p => p === playerName);
+    const playersData = sessionData.players.map(playerName => {
+      const player = sessionData.players.find(p => p === playerName);
       return {
         id: null, // We don't have player IDs in this structure
         name: playerName,

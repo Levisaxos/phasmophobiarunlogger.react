@@ -24,7 +24,10 @@
     "set-build-info": "node scripts/set-build-info.js",
     "version:patch": "npm version patch && git push --follow-tags",
     "version:minor": "npm version minor && git push --follow-tags",
-    "version:major": "npm version major && git push --follow-tags"
+    "version:major": "npm version major && git push --follow-tags",
+    "release:patch": "npm run version:patch && npm run set-build-info && npm run build && npm run deploy",
+    "release:minor": "npm run version:minor && npm run set-build-info && npm run build && npm run deploy",
+    "release:major": "npm run version:major && npm run set-build-info && npm run build && npm run deploy"
   },
   "eslintConfig": {
     "extends": [

@@ -136,7 +136,7 @@ const FloorRoomSelector = ({
           onChange={handleRoomChange}
           className="w-full px-3 py-2 border border-gray-500 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {!selectedRoom && availableRooms.length > 1 && (
+          {!selectedRoom && (
             <option value="">
               {selectedFloor ? "Choose a room (optional)..." : "Select a floor first"}
             </option>

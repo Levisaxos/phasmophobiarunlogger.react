@@ -125,7 +125,7 @@ const EvidenceSelector = ({
                 type="button"
                 onClick={() => !isImpossible && handleEvidenceClick(evidenceItem.id)}
                 disabled={(!isSelected && !isExcluded && !canSelect) || isImpossible}
-                className={`px-4 py-3 text-left border rounded-md transition-colors duration-200 ${buttonStyle}`}
+                className={`px-5 py-2 text-left border rounded-md transition-colors duration-200 ${buttonStyle}`}
                 title={isImpossible ? "No remaining ghosts have this evidence" : ""}
               >
                 <div className="flex items-center justify-between">

@@ -45,7 +45,7 @@ const CursedPossessionSelector = ({
               key={possession.id}
               type="button"
               onClick={() => handlePossessionClick(possession.id)}
-              className={`px-4 py-3 text-left border rounded-md transition-colors duration-200 ${
+              className={`px-5 py-2 text-left border rounded-md transition-colors duration-200 ${
                 isSelected
                   ? 'bg-purple-600 border-purple-500 text-white'
                   : 'bg-gray-800 border-gray-500 text-gray-300 hover:bg-gray-600'

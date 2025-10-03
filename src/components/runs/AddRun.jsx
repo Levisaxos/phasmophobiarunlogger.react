@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
 import { useToast } from '../../hooks/useToast';
-import Timer from '../common/Timer';
 import SessionSetup from '../session/SessionSetup';
 
 // Import from AddRun subdirectory
@@ -20,6 +19,8 @@ const AddRun = () => {
     ghosts,
     evidence,
     cursedPossessions,
+    players: allPlayers,
+    gameModes,
     loading,
     error,
     createRun
@@ -98,6 +99,18 @@ const AddRun = () => {
     }
   }, [sessionData, maps, selectedCollectionMap]);
 
+  // Auto-increment timer when session is active
+  useEffect(() => {
+    if (sessionStartTime) {
+      const interval = setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
+        setCurrentRunTime(elapsedSeconds);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [sessionStartTime]);
+
   const handleStartSession = (newSessionData) => {
     setSessionData(newSessionData);
     setSessionStartTime(Date.now());
@@ -123,10 +136,6 @@ const AddRun = () => {
     setCurrentRunTime(0);
     setSelectedCollectionMap(null);
     resetForm();
-  };
-
-  const handleTimerUpdate = (timeInSeconds) => {
-    setCurrentRunTime(timeInSeconds);
   };
 
   const handleSubmit = async (e) => {
@@ -171,16 +180,11 @@ const AddRun = () => {
 
       const newRun = await createRun(runData);
       
-      // Show success message with current session data (before clearing)
+      // Show success message BEFORE clearing (so we can still access sessionData)
       success(`Run #${newRun.runNumber} for ${sessionData.players.length} player${sessionData.players.length > 1 ? 's' : ''} today. Time: ${formatTime(currentRunTime)}`);
       
-      // CRITICAL: Clear session completely to return to setup screen
-      // This must happen AFTER success message but INSIDE the try block
+      // NOW clear session - this will trigger re-render and show SessionSetup
       setSessionData(null);
-      setSessionStartTime(null);
-      setCurrentRunTime(0);
-      setSelectedCollectionMap(null);
-      resetForm();
 
     } catch (err) {
       console.error('Error saving run:', err);
@@ -229,9 +233,9 @@ const AddRun = () => {
   console.log('AddRun: Rendering run form with sessionData:', sessionData);
 
   return (
-    <div className="bg-gray-700 rounded-lg shadow p-6">
+    <div className="bg-gray-700 rounded-lg shadow pl-6 pr-6 pb-6 pt-2">
       {/* Session Header */}
-      <div className="mb-6 pb-4 border-b border-gray-600">
+      <div className="mb-2 pb-2 border-b border-gray-600">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-100 mb-2">
@@ -274,7 +278,7 @@ const AddRun = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Floor/Room Selection and Wing Selection Row */}
         <div className="flex items-end gap-6">
           <div className={`flex-1 grid gap-4 items-end ${sessionData.mapCollection ? 'grid-cols-3' : 'grid-cols-2'}`}>
@@ -329,15 +333,9 @@ const AddRun = () => {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg blur-sm opacity-75"></div>
                 <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg p-3 text-center">
-                  <div className="text-xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400">
+                  <div className="text-xs font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400">
                     {formatTime(currentRunTime)}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {currentRunTime > 0 ? 'ACTIVE' : 'STANDBY'}
-                  </div>
-                  {currentRunTime > 0 && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                  )}
+                  </div>                                    
                 </div>
               </div>
             </div>
@@ -417,15 +415,6 @@ const AddRun = () => {
           )}
         </div>
       </form>
-
-      {/* Hidden Timer Component for Auto-Running */}
-      {sessionStartTime && (
-        <Timer
-          onTimeUpdate={handleTimerUpdate}
-          autoStart={true}
-          className="hidden"
-        />
-      )}
     </div>
   );
 };

@@ -65,8 +65,8 @@ const GhostSelector = ({
   }
 
   return (
-    <div>
-      <div className='flex gap-2'>
+    <div className="mt-1">
+      <div>
         <label className="block text-sm font-medium text-gray-300 mb-2 flex-1">
           Select Ghosts
         </label>
@@ -79,7 +79,7 @@ const GhostSelector = ({
       </div>
 
       {/* Ghost Grid - 3 columns, up to 8 rows */}
-      <div className="grid grid-cols-3 gap-1.5 border border-gray-600 rounded-lg p-2 bg-gray-800">
+      <div className="grid grid-cols-3 gap-2 border border-gray-600 rounded-lg p-2 bg-gray-800">
         {ghosts.map((ghost) => {
           const isGuessed = selectedGhost?.id === ghost.id;
           const isActual = actualGhost?.id === ghost.id;
@@ -145,7 +145,7 @@ const GhostSelector = ({
               onClick={() => meetsEvidenceCriteria && handleGhostClick(ghost)}
               onContextMenu={(e) => handleGhostRightClick(e, ghost)}
               disabled={!meetsEvidenceCriteria && !isGuessed && !isActual && !isExcluded}
-              className={`p-0 text-xs rounded-md border transition-all duration-200 min-h-[70px] flex overflow-hidden ${buttonStyle}`}
+              className={`p-0 text-l rounded-md border transition-all duration-200 min-h-[50px] flex overflow-hidden ${buttonStyle}`}
             >
               {/* Left: Ghost Name - 70% width, centered */}
               <div className="w-[70%] flex items-center justify-center p-2">

@@ -1,12 +1,10 @@
-// src/components/runs/AddRun.jsx - Auto-select collection wing for challenge modes
+// src/components/runs/AddRun.jsx - Fixed to always return to session setup after run ends
 import React, { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { useAddRunForm } from '../../hooks/useAddRunForm';
 import { useToast } from '../../hooks/useToast';
 import Timer from '../common/Timer';
 import SessionSetup from '../session/SessionSetup';
-
-
 
 // Import from AddRun subdirectory
 import CursedPossessionSelector from './CursedPossessionSelector';
@@ -38,7 +36,6 @@ const AddRun = () => {
   const [selectedCollectionMap, setSelectedCollectionMap] = useState(null);
 
   const {
-    // State - now includes floor state
     selectedFloor,
     selectedRoom,
     selectedCursedPossession,
@@ -50,12 +47,8 @@ const AddRun = () => {
     playerStates,
     isPerfectGame,
     isSaving,
-
-    // Setters
     setSelectedEvidenceIds,
     setIsSaving,
-
-    // Handlers - now includes floor handlers
     handleFloorChange,
     handleRoomChange,
     handleCursedPossessionChange,
@@ -67,8 +60,6 @@ const AddRun = () => {
     handlePlayerStatusToggle,
     handlePerfectGameToggle,
     resetForm,
-
-    // Data transformation
     createRunData
   } = useAddRunForm();
 
@@ -85,7 +76,6 @@ const AddRun = () => {
       .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
   }, [cursedPossessions]);
 
-  // Get the maximum evidence allowed by the session game mode
   const maxEvidence = sessionData?.gameMode?.maxEvidence ?? 3;
 
   // Clear evidence when game mode changes and new limit is lower
@@ -98,13 +88,11 @@ const AddRun = () => {
   // Auto-select collection map for challenge modes when session starts
   useEffect(() => {
     if (sessionData?.mapCollection && sessionData?.challengeMode?.mapCollectionId && !selectedCollectionMap) {
-      // This is a challenge mode with a map collection - auto-select the first map
       const collectionMaps = maps.filter(map =>
         sessionData.mapCollection.mapIds.includes(map.id)
       );
 
       if (collectionMaps.length > 0) {
-        // Auto-select the first map in the collection (sorted by name)
         const sortedMaps = [...collectionMaps].sort((a, b) => a.name.localeCompare(b.name));
         console.log('Auto-selecting wing/map for challenge mode:', sortedMaps[0].name);
         setSelectedCollectionMap(sortedMaps[0]);
@@ -117,11 +105,11 @@ const AddRun = () => {
     setSessionStartTime(Date.now());
     setCurrentRunTime(0);
     setSelectedCollectionMap(null);
-    // Reset form when starting new session
     resetForm();
   };
 
   const handleEndSession = () => {
+    // FIXED: Completely clear session to force return to setup
     setSessionData(null);
     setSessionStartTime(null);
     setCurrentRunTime(0);
@@ -129,19 +117,13 @@ const AddRun = () => {
   };
 
   const handleEndRun = () => {
-    // FIXED: Clear both map and mapCollection to ensure we go back to session setup
-    // Keep only the persistent session data (players and game mode)
-    setSessionData(prev => prev ? ({
-      players: prev.players,
-      gameMode: prev.gameMode,
-      challengeMode: prev.challengeMode, // Keep challenge mode too
-      map: null,           // Clear individual map
-      mapCollection: null  // Clear map collection
-    }) : null);
-
+    // FIXED: Completely clear ALL session state to force return to setup screen
+    // This ensures we go back to the session selection screen
+    console.log('handleEndRun: Clearing session data to return to setup');
+    setSessionData(null);
     setSessionStartTime(null);
     setCurrentRunTime(0);
-    setSelectedCollectionMap(null); // Clear selected collection map
+    setSelectedCollectionMap(null);
     resetForm();
   };
 
@@ -157,7 +139,6 @@ const AddRun = () => {
       return;
     }
 
-    // For map collections, we need a selected map
     const actualMap = sessionData.mapCollection ? selectedCollectionMap : sessionData.map;
     if (!actualMap) {
       warning(sessionData.mapCollection
@@ -176,7 +157,7 @@ const AddRun = () => {
 
       const runData = createRunData({
         sessionData,
-        map: actualMap, // Use the actual selected map
+        map: actualMap,
         selectedFloor,
         selectedRoom,
         selectedCursedPossessionObj,
@@ -191,9 +172,17 @@ const AddRun = () => {
       });
 
       const newRun = await createRun(runData);
-      resetForm();
-
+      
+      // Show success message with current session data (before clearing)
       success(`Run #${newRun.runNumber} for ${sessionData.players.length} player${sessionData.players.length > 1 ? 's' : ''} today. Time: ${formatTime(currentRunTime)}`);
+      
+      // CRITICAL: Clear session completely to return to setup screen
+      // This must happen AFTER success message but INSIDE the try block
+      setSessionData(null);
+      setSessionStartTime(null);
+      setCurrentRunTime(0);
+      setSelectedCollectionMap(null);
+      resetForm();
 
     } catch (err) {
       console.error('Error saving run:', err);
@@ -233,10 +222,13 @@ const AddRun = () => {
     );
   }
 
-  // FIXED: Show session setup if no session OR no map/collection is selected
-  if (!sessionData || (!sessionData.map && !sessionData.mapCollection)) {
-    return <SessionSetup onStartSession={handleStartSession} initialData={sessionData} />;
+  // FIXED: Always show session setup if no active session
+  if (!sessionData) {
+    console.log('AddRun: No sessionData - showing SessionSetup');
+    return <SessionSetup onStartSession={handleStartSession} />;
   }
+
+  console.log('AddRun: Rendering run form with sessionData:', sessionData);
 
   return (
     <div className="bg-gray-700 rounded-lg shadow p-6">
@@ -249,20 +241,17 @@ const AddRun = () => {
                 ? `${sessionData.mapCollection.name} - ${sessionData.gameMode.name}`
                 : `${sessionData.map.name} - ${sessionData.gameMode.name}`
               }
-              {/* Show challenge mode indicator with tooltip */}
               {sessionData.challengeMode && (
                 <span
                   className="ml-2 text-orange-400 text-lg relative group cursor-help"
                   title={sessionData.challengeMode.description || 'No description available'}
                 >
                   🎯 {sessionData.challengeMode.name}
-                  {/* Tooltip */}
                   {sessionData.challengeMode.description && (
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap max-w-xs z-10">
                       <div className="text-center">
                         {sessionData.challengeMode.description}
                       </div>
-                      {/* Tooltip arrow */}
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                     </div>
                   )}
@@ -271,7 +260,6 @@ const AddRun = () => {
             </h2>
             <p className="text-gray-400">
               Players: {sessionData.players.join(', ')} • Max {maxEvidence} evidence
-              {/* Show auto-selection info for challenge mode */}
               {sessionData.challengeMode && sessionData.mapCollection && selectedCollectionMap && (
                 <span className="ml-2 text-blue-400">
                   • Auto-selected: {selectedCollectionMap.name}
@@ -291,10 +279,7 @@ const AddRun = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Floor/Room Selection and Wing Selection Row */}
         <div className="flex items-end gap-6">
-          {/* Section 1: Wing, Floor, Room (dynamic grid based on presence of wing) */}
-          <div className={`flex-1 grid gap-4 items-end ${sessionData.mapCollection ? 'grid-cols-3' : 'grid-cols-2'
-            }`}>
-            {/* Wing Selection (if using a collection) */}
+          <div className={`flex-1 grid gap-4 items-end ${sessionData.mapCollection ? 'grid-cols-3' : 'grid-cols-2'}`}>
             {sessionData.mapCollection && (
               <div>
                 <CollectionMapSelector
@@ -306,7 +291,6 @@ const AddRun = () => {
               </div>
             )}
 
-            {/* Floor and Room Selection - only show if we have a selected map */}
             {(sessionData.map || selectedCollectionMap) && (
               <div className="col-span-2">
                 <FloorRoomSelector
@@ -320,9 +304,8 @@ const AddRun = () => {
             )}
           </div>
 
-          {/* Section 2: Perfect and Timer (minimal width) */}
+          {/* Perfect Game and Timer Section */}
           <div className="flex items-end gap-4">
-            {/* Perfect Game Toggle */}
             <div className="w-24">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Perfect
@@ -330,23 +313,22 @@ const AddRun = () => {
               <button
                 type="button"
                 onClick={() => handlePerfectGameToggle(!isPerfectGame)}
-                className={`w-full py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 h-[42px] ${isPerfectGame
+                className={`w-full py-2 rounded-md font-medium transition-colors duration-200 flex items-center justify-center gap-1 h-[42px] ${
+                  isPerfectGame
                     ? 'bg-yellow-600 text-white'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-600 border border-gray-500'
-                  }`}
+                }`}
               >
                 <span className="text-lg">{isPerfectGame ? '⭐' : '☆'}</span>
                 {isPerfectGame ? 'Yes' : 'No'}
               </button>
             </div>
 
-            {/* Timer Display - Enhanced */}
             <div className="w-32">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Session Timer
               </label>
               <div className="relative">
-                {/* Glowing border effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg blur-sm opacity-75"></div>
                 <div className="relative bg-gray-900 border-2 border-gray-700 rounded-lg p-3 text-center">
                   <div className="text-xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400">
@@ -355,7 +337,6 @@ const AddRun = () => {
                   <div className="text-xs text-gray-400 mt-1">
                     {currentRunTime > 0 ? 'ACTIVE' : 'STANDBY'}
                   </div>
-                  {/* Pulse indicator for active timer */}
                   {currentRunTime > 0 && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   )}
@@ -367,7 +348,6 @@ const AddRun = () => {
 
         {/* Cursed Possession and Evidence Section - Side by Side */}
         <div className="flex gap-6">
-          {/* Cursed Possession Section - Left (50%) */}
           <div className="flex-1">
             <CursedPossessionSelector
               cursedPossessions={availableCursedPossessions}
@@ -376,7 +356,6 @@ const AddRun = () => {
             />
           </div>
 
-          {/* Evidence Section - Right (50%) */}
           <div className="flex-1">
             <EvidenceSelector
               evidence={availableEvidence}

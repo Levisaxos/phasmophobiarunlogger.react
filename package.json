@@ -1,6 +1,6 @@
 {
   "name": "phasmophobiarunlogger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Personal project for tracking Phasmophobia game runs and statistics",
   "homepage": "https://levisaxos.github.io/phasmophobiarunlogger.react",
   "private": true,

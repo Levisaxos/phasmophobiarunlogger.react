@@ -1,6 +1,6 @@
 // src/components/common/FilterDropdown.jsx - Updated with hover functionality
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import  HoverSelect  from './HoverSelect';
 
 const FilterDropdown = ({
@@ -34,14 +34,6 @@ const FilterDropdown = ({
       setIsOpen(false);
       setHighlightedIndex(-1);
     }, 150);
-  };
-
-  const handleSelectClick = (e) => {
-    if (enableHover) {
-      e.preventDefault();
-      return;
-    }
-    // Let browser handle normal select behavior when hover is disabled
   };
 
   const handleOptionClick = (optionValue) => {

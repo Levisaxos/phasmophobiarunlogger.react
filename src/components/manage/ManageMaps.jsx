@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useData } from '../../hooks/useData';
-import { UI_CONSTANTS } from '../../constants';
 import  HoverSelect  from '../common/HoverSelect';
 
 const ManageMapsPage = () => {

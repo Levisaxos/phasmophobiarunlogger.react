@@ -20,8 +20,6 @@ const AddRun = () => {
     ghosts,
     evidence,
     cursedPossessions,
-    players: allPlayers,
-    gameModes,
     loading,
     error,
     createRun

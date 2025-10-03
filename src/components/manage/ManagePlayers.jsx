@@ -3,7 +3,7 @@ import { useData } from '../../hooks/useData';
 import { UI_CONSTANTS } from '../../constants';
 
 const ManagePlayers = () => {
-  const { players, loading, error, createPlayer, updatePlayer, deletePlayer, togglePlayerActive } = useData();
+  const { players, loading, error, createPlayer, updatePlayer, deletePlayer } = useData();
   
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -79,28 +79,6 @@ const ManagePlayers = () => {
       isActive: true,
       isDefault: false
     });
-  };
-
-  const handleToggleDefault = async (player) => {
-    try {
-      const currentDefaultCount = players.filter(p => p.isDefault && p.id !== player.id).length;
-      
-      // Check if trying to set as default when already at limit
-      if (!player.isDefault && currentDefaultCount >= 4) {
-        alert('Maximum of 4 players can be set as default.');
-        return;
-      }
-      
-      // Toggle the default status
-      const updatedPlayerData = {
-        ...player,
-        isDefault: !player.isDefault
-      };
-      await updatePlayer(player.id, updatedPlayerData);
-    } catch (err) {
-      console.error('Error toggling default status:', err);
-      alert('Error updating player: ' + err.message);
-    }
   };
 
   if (loading) {

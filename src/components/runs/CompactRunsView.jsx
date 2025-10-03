@@ -96,9 +96,6 @@ const CompactRunsView = ({
       return <span className="text-gray-300">Not recorded</span>;
     }
 
-    const correctIcon = wasCorrect ? '✅' : '❌';
-    const correctColor = wasCorrect ? 'text-green-400' : 'text-red-400';
-
     return (
       <div className="space-y-1">
         <div className="text-gray-300">

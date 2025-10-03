@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useData } from '../../hooks/useData';
 
 const ManageCursedPossessions = () => {
@@ -58,14 +58,6 @@ const ManageCursedPossessions = () => {
         console.error('Error deleting cursed possession:', err);
         alert('Error deleting cursed possession: ' + err.message);
       }
-    }
-  };
-
-  const handleToggleActive = async (possession) => {
-    try {
-      await toggleCursedPossessionActive(possession.id);
-    } catch (err) {
-      console.error('Error toggling possession status:', err);
     }
   };
 

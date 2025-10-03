@@ -61,14 +61,6 @@ const ManageEvidence = () => {
     }
   };
 
-  const handleToggleActive = async (evidenceItem) => {
-    try {
-      await toggleEvidenceActive(evidenceItem.id);
-    } catch (err) {
-      console.error('Error toggling evidence status:', err);
-    }
-  };
-
   const handleCancel = () => {
     setIsEditing(false);
     setSelectedEvidence(null);

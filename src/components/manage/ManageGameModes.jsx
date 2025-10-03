@@ -62,14 +62,6 @@ const ManageGameModes = () => {
     }
   };
 
-  const handleToggleActive = async (gameMode) => {
-    try {
-      await toggleGameModeActive(gameMode.id);
-    } catch (err) {
-      console.error('Error toggling game mode status:', err);
-    }
-  };
-
   const handleCancel = () => {
     setIsEditing(false);
     setSelectedGameMode(null);

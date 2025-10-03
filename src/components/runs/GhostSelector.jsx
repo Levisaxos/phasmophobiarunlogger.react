@@ -1,6 +1,4 @@
 // components/AddRun/GhostSelector.jsx - Updated to handle excluded evidence
-import React from 'react';
-
 const GhostSelector = ({
   ghosts,
   evidence,
@@ -27,8 +25,6 @@ const GhostSelector = ({
     
     return hasAllSelectedEvidence && hasNoExcludedEvidence;
   });
-
-  const wasCorrect = selectedGhost && actualGhost ? selectedGhost.id === actualGhost.id : true;
 
   const handleGhostClick = (ghost) => {
     const isSelected = selectedGhost?.id === ghost.id;
